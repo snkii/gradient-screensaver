@@ -1,96 +1,339 @@
 import AppKit
-import WebKit
 import CoreGraphics
-import ImageIO
 
-let html = """
-<!DOCTYPE html><html><head><meta charset="UTF-8">
-<style>*{margin:0;padding:0}html,body{width:100%;height:100%;overflow:hidden;background:#282828}</style>
-</head><body><script>
-const palette = [
-  [250,189,47],[254,128,25],[251,73,52],[211,134,155],
-  [184,187,38],[142,192,124],[131,165,152],[69,133,136]
-];
-
-const blobs = [
-  {x:.22,y:.45,vx:.00022,vy:.00016,r:.90,c:[250,189,47],t:[250,189,47],el:null},
-  {x:.78,y:.20,vx:-.00018,vy:.00021,r:.90,c:[131,165,152],t:[131,165,152],el:null},
-  {x:.52,y:.78,vx:.00014,vy:-.00023,r:.90,c:[211,134,155],t:[211,134,155],el:null},
-];
-
-blobs.forEach(b => {
-  const el = document.createElement('div');
-  el.style.position = 'fixed';
-  el.style.borderRadius = '50%';
-  el.style.opacity = '0.7';
-  el.style.willChange = 'transform, background-color';
-  document.body.appendChild(el);
-  b.el = el;
-  const m = Math.min(window.innerWidth, window.innerHeight);
-  const size = b.r * m;
-  el.style.width = el.style.height = size + 'px';
-  el.style.filter = `blur(${Math.round(m * 0.22)}px)`;
-});
-
-function lerp(a,b,t){ return a.map((v,i)=>v+(b[i]-v)*t); }
-
-function randomize(){
-  const pool=[...palette].sort(()=>Math.random()-.5);
-  blobs.forEach((b,i)=>{ b.t=[...pool[i]]; });
+private struct MeshRGB {
+    var r, g, b: CGFloat
 }
-randomize();
-setInterval(randomize, 6000);
 
-let _last=0, _paused=false;
-window.pauseAnimation  = () => { _paused = true; };
-window.resumeAnimation = () => { if (_paused) { _paused = false; requestAnimationFrame(draw); } };
-function draw(ts){
-  if (_paused) return;
-  requestAnimationFrame(draw);
-  if(ts-_last < 50) return;
-  _last=ts;
-  const w=window.innerWidth, h=window.innerHeight, m=Math.min(w,h);
-  for(const b of blobs){
-    b.c=lerp(b.c,b.t,.025);
-    b.x+=b.vx; b.y+=b.vy;
-    if(b.x<-.2||b.x>1.2) b.vx*=-1;
-    if(b.y<-.2||b.y>1.2) b.vy*=-1;
-    const size=b.r*m;
-    const [r_,g_,bl_]=b.c.map(Math.round);
-    b.el.style.background = `rgb(${r_},${g_},${bl_})`;
-    b.el.style.transform = `translate(${b.x*w - size/2}px, ${b.y*h - size/2}px)`;
-  }
+private struct MeshBlob {
+    var x, y, vx, vy, vr, radius, sx, sy, rot, colorElapsed: CGFloat
+    var current, start, target: MeshRGB
 }
-requestAnimationFrame(draw);
-</script></body></html>
-"""
 
-// Creates a 2×2 solid #282828 PNG and returns its file URL
-func makeDarkWallpaperURL() -> URL? {
-    let img = NSImage(size: NSSize(width: 2, height: 2))
-    img.lockFocus()
-    NSColor(deviceRed: 40/255, green: 40/255, blue: 40/255, alpha: 1).setFill()
-    NSRect(x: 0, y: 0, width: 2, height: 2).fill()
-    img.unlockFocus()
-    guard let tiff = img.tiffRepresentation,
-          let rep  = NSBitmapImageRep(data: tiff),
-          let png  = rep.representation(using: .png, properties: [:]) else { return nil }
-    let url = URL(fileURLWithPath: NSTemporaryDirectory())
-              .appendingPathComponent("gradient_wallpaper_bg.png")
+private let meshPalette: [MeshRGB] = [
+    MeshRGB(r: 250/255, g: 189/255, b:  47/255),
+    MeshRGB(r: 215/255, g: 153/255, b:  33/255),
+    MeshRGB(r: 254/255, g: 128/255, b:  25/255),
+    MeshRGB(r: 251/255, g:  73/255, b:  52/255),
+    MeshRGB(r: 184/255, g: 187/255, b:  38/255),
+    MeshRGB(r: 142/255, g: 192/255, b: 124/255),
+    MeshRGB(r: 131/255, g: 165/255, b: 152/255),
+    MeshRGB(r:  69/255, g: 133/255, b: 136/255),
+    MeshRGB(r: 211/255, g: 134/255, b: 155/255),
+    MeshRGB(r: 146/255, g: 131/255, b: 116/255),
+]
+
+final class GradientWallpaperView: NSView {
+    private let blobSizeFactor: CGFloat = 0.90
+    private let blurFactor: CGFloat = 0.22
+
+    private var blobs: [MeshBlob] = []
+    private var frameTimer: Timer?
+    private var colorTimer: Timer?
+    private var lastFrameTime: TimeInterval?
+    private var paused = false
+
+    private var reduceMotion: Bool {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+
+    private var frameInterval: TimeInterval {
+        reduceMotion ? 0.5 : 1.0 / 15.0
+    }
+
+    private var colorInterval: TimeInterval {
+        reduceMotion ? 16.0 : 7.0
+    }
+
+    private var colorTransitionSeconds: CGFloat {
+        reduceMotion ? 14.0 : 6.5
+    }
+
+    override var isOpaque: Bool { true }
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.backgroundColor = CGColor(red: 40/255, green: 40/255, blue: 40/255, alpha: 1)
+        initBlobs()
+        startTimers()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        wantsLayer = true
+        layer?.backgroundColor = CGColor(red: 40/255, green: 40/255, blue: 40/255, alpha: 1)
+        initBlobs()
+        startTimers()
+    }
+
+    deinit {
+        stopTimers()
+    }
+
+    func setPaused(_ shouldPause: Bool) {
+        guard paused != shouldPause else { return }
+        paused = shouldPause
+        if shouldPause {
+            stopTimers()
+        } else {
+            lastFrameTime = Date.timeIntervalSinceReferenceDate
+            startTimers()
+            needsDisplay = true
+        }
+    }
+
+    private func initBlobs() {
+        blobs = (0..<3).map { _ in
+            let color = randomColor()
+            let velocity = randomVelocity()
+            return MeshBlob(
+                x: randomBetween(-0.12, 1.12),
+                y: randomBetween(-0.10, 1.10),
+                vx: velocity.vx,
+                vy: velocity.vy,
+                vr: randomBetween(-0.8, 0.8),
+                radius: randomBetween(0.86, 1.08),
+                sx: randomBetween(0.85, 1.38),
+                sy: randomBetween(0.78, 1.28),
+                rot: randomBetween(0, 360),
+                colorElapsed: colorTransitionSeconds,
+                current: color,
+                start: color,
+                target: color
+            )
+        }
+    }
+
+    private func startTimers() {
+        guard frameTimer == nil, colorTimer == nil else { return }
+
+        lastFrameTime = Date.timeIntervalSinceReferenceDate
+
+        let frame = Timer(timeInterval: frameInterval, repeats: true) { [weak self] _ in
+            self?.animateFrame()
+        }
+        RunLoop.main.add(frame, forMode: .common)
+        frameTimer = frame
+
+        let color = Timer(timeInterval: colorInterval, repeats: true) { [weak self] _ in
+            self?.randomizeTargets()
+        }
+        RunLoop.main.add(color, forMode: .common)
+        colorTimer = color
+    }
+
+    private func stopTimers() {
+        frameTimer?.invalidate()
+        colorTimer?.invalidate()
+        frameTimer = nil
+        colorTimer = nil
+        lastFrameTime = nil
+    }
+
+    private func animateFrame() {
+        guard !paused else { return }
+
+        let now = Date.timeIntervalSinceReferenceDate
+        let dt = CGFloat(min(now - (lastFrameTime ?? now), 0.25))
+        lastFrameTime = now
+
+        for i in 0..<blobs.count {
+            blobs[i].x += blobs[i].vx * dt
+            blobs[i].y += blobs[i].vy * dt
+            blobs[i].rot += blobs[i].vr * dt
+            if blobs[i].x < -0.2 || blobs[i].x > 1.2 { blobs[i].vx = -blobs[i].vx }
+            if blobs[i].y < -0.2 || blobs[i].y > 1.2 { blobs[i].vy = -blobs[i].vy }
+            if blobs[i].colorElapsed < colorTransitionSeconds {
+                blobs[i].colorElapsed += dt
+                blobs[i].current = lerp(blobs[i].start, blobs[i].target,
+                                        easeInOut(blobs[i].colorElapsed / colorTransitionSeconds))
+            }
+        }
+
+        needsDisplay = true
+    }
+
+    private func randomizeTargets() {
+        guard !paused else { return }
+        for i in 0..<blobs.count {
+            blobs[i].start = blobs[i].current
+            blobs[i].target = randomColor()
+            blobs[i].colorElapsed = 0
+        }
+    }
+
+    private func randomColor() -> MeshRGB {
+        meshPalette[Int.random(in: 0..<meshPalette.count)]
+    }
+
+    private func randomBetween(_ min: CGFloat, _ max: CGFloat) -> CGFloat {
+        min + CGFloat.random(in: 0...1) * (max - min)
+    }
+
+    private func randomVelocity() -> (vx: CGFloat, vy: CGFloat) {
+        let angle = randomBetween(0, CGFloat.pi * 2)
+        let speed = randomBetween(0.0026, 0.0054)
+        return (cos(angle) * speed, sin(angle) * speed)
+    }
+
+    private func easeInOut(_ t: CGFloat) -> CGFloat {
+        let x = min(max(t, 0), 1)
+        return x * x * (3 - 2 * x)
+    }
+
+    private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: CGFloat) -> CGFloat {
+        a + (b - a) * t
+    }
+
+    private func lerp(_ a: MeshRGB, _ b: MeshRGB, _ t: CGFloat) -> MeshRGB {
+        MeshRGB(r: lerp(a.r, b.r, t), g: lerp(a.g, b.g, t), b: lerp(a.b, b.b, t))
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+
+        ctx.setFillColor(CGColor(red: 40/255, green: 40/255, blue: 40/255, alpha: 1))
+        ctx.fill(bounds)
+
+        let minDim = min(bounds.width, bounds.height)
+        guard minDim > 0 else { return }
+
+        for blob in blobs {
+            let size = blob.radius * blobSizeFactor * minDim
+            drawBlob(ctx: ctx,
+                     cx: blob.x * bounds.width,
+                     cy: blob.y * bounds.height,
+                     size: size,
+                     blur: blurFactor * minDim,
+                     sx: blob.sx,
+                     sy: blob.sy,
+                     rot: blob.rot,
+                     color: blob.current)
+        }
+    }
+
+    private func drawBlob(ctx: CGContext, cx: CGFloat, cy: CGFloat, size: CGFloat,
+                          blur: CGFloat, sx: CGFloat, sy: CGFloat, rot: CGFloat,
+                          color: MeshRGB) {
+        let radius = size / 2 + blur * 2
+        let colors = [
+            CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.70),
+            CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.52),
+            CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.18),
+            CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.0),
+        ] as CFArray
+        let locations: [CGFloat] = [0, 0.34, 0.72, 1]
+        guard let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                                        colors: colors,
+                                        locations: locations) else { return }
+
+        ctx.saveGState()
+        ctx.translateBy(x: cx, y: cy)
+        ctx.rotate(by: rot * CGFloat.pi / 180)
+        ctx.scaleBy(x: sx, y: sy)
+        ctx.drawRadialGradient(gradient,
+                               startCenter: .zero,
+                               startRadius: 0,
+                               endCenter: .zero,
+                               endRadius: radius,
+                               options: [.drawsAfterEndLocation])
+        ctx.restoreGState()
+    }
+}
+
+func makeStaticWallpaperURL(for screen: NSScreen, index: Int) -> URL? {
+    let scale = screen.backingScaleFactor
+    let pointSize = screen.frame.size
+    let pixelWidth = max(2, Int(pointSize.width * scale))
+    let pixelHeight = max(2, Int(pointSize.height * scale))
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    guard let ctx = CGContext(data: nil,
+                              width: pixelWidth,
+                              height: pixelHeight,
+                              bitsPerComponent: 8,
+                              bytesPerRow: 0,
+                              space: colorSpace,
+                              bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+    else { return nil }
+
+    let width = CGFloat(pixelWidth)
+    let height = CGFloat(pixelHeight)
+    let minDim = min(width, height)
+
+    ctx.setFillColor(CGColor(red: 40/255, green: 40/255, blue: 40/255, alpha: 1))
+    ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
+
+    for _ in 0..<4 {
+        let color = meshPalette[Int.random(in: 0..<meshPalette.count)]
+        drawStaticBlob(ctx: ctx,
+                       cx: randomBetween(-0.08, 1.08) * width,
+                       cy: randomBetween(-0.08, 1.08) * height,
+                       size: randomBetween(0.86, 1.10) * 0.90 * minDim,
+                       blur: 0.22 * minDim,
+                       sx: randomBetween(0.85, 1.38),
+                       sy: randomBetween(0.78, 1.28),
+                       rot: randomBetween(0, 360),
+                       color: color)
+    }
+
+    guard let cgImage = ctx.makeImage() else { return nil }
+    let rep = NSBitmapImageRep(cgImage: cgImage)
+    guard let png = rep.representation(using: .png, properties: [:]) else { return nil }
+
+    let filename = "gradient_wallpaper_lock_\(index)_\(UUID().uuidString).png"
+    let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(filename)
     try? png.write(to: url)
     return url
+}
+
+private func randomBetween(_ min: CGFloat, _ max: CGFloat) -> CGFloat {
+    min + CGFloat.random(in: 0...1) * (max - min)
+}
+
+private func drawStaticBlob(ctx: CGContext, cx: CGFloat, cy: CGFloat, size: CGFloat,
+                            blur: CGFloat, sx: CGFloat, sy: CGFloat, rot: CGFloat,
+                            color: MeshRGB) {
+    let radius = size / 2 + blur * 2
+    let colors = [
+        CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.70),
+        CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.52),
+        CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.18),
+        CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.0),
+    ] as CFArray
+    let locations: [CGFloat] = [0, 0.34, 0.72, 1]
+    guard let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                                    colors: colors,
+                                    locations: locations) else { return }
+
+    ctx.saveGState()
+    ctx.translateBy(x: cx, y: cy)
+    ctx.rotate(by: rot * CGFloat.pi / 180)
+    ctx.scaleBy(x: sx, y: sy)
+    ctx.drawRadialGradient(gradient,
+                           startCenter: .zero,
+                           startRadius: 0,
+                           endCenter: .zero,
+                           endRadius: radius,
+                           options: [.drawsAfterEndLocation])
+    ctx.restoreGState()
 }
 
 class WallpaperDelegate: NSObject, NSApplicationDelegate {
     var windows: [NSWindow] = []
     var statusItem: NSStatusItem?
     var originalWallpapers: [NSScreen: URL] = [:]
+    var pausedForSystem = false
+    var pausedForActivity = false
+    var animationPaused = false
 
     func applicationDidFinishLaunching(_ n: Notification) {
         replaceSystemWallpaper()
         NSScreen.screens.forEach { windows.append(makeWindow($0)) }
         setupMenuBar()
         setupSleepObservers()
+        setupActivityObservers()
+        updateActivityPause(force: true)
     }
 
     func applicationWillTerminate(_ n: Notification) {
@@ -100,12 +343,21 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     // MARK: - System wallpaper replacement
 
     func replaceSystemWallpaper() {
-        guard let darkURL = makeDarkWallpaperURL() else { return }
-        for screen in NSScreen.screens {
+        for (index, screen) in NSScreen.screens.enumerated() {
             if let original = NSWorkspace.shared.desktopImageURL(for: screen) {
                 originalWallpapers[screen] = original
             }
-            try? NSWorkspace.shared.setDesktopImageURL(darkURL, for: screen, options: [:])
+            if let meshURL = makeStaticWallpaperURL(for: screen, index: index) {
+                try? NSWorkspace.shared.setDesktopImageURL(meshURL, for: screen, options: [:])
+            }
+        }
+    }
+
+    func refreshLockScreenWallpaper() {
+        for (index, screen) in NSScreen.screens.enumerated() {
+            if let meshURL = makeStaticWallpaperURL(for: screen, index: index) {
+                try? NSWorkspace.shared.setDesktopImageURL(meshURL, for: screen, options: [:])
+            }
         }
     }
 
@@ -119,26 +371,52 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
 
     func setupSleepObservers() {
         let ws = NSWorkspace.shared.notificationCenter
-        ws.addObserver(self, selector: #selector(pause),
+        ws.addObserver(self, selector: #selector(pauseForSystem),
                        name: NSWorkspace.screensDidSleepNotification, object: nil)
-        ws.addObserver(self, selector: #selector(pause),
+        ws.addObserver(self, selector: #selector(pauseForSystem),
                        name: NSWorkspace.sessionDidResignActiveNotification, object: nil)
-        ws.addObserver(self, selector: #selector(resume),
+        ws.addObserver(self, selector: #selector(resumeFromSystem),
                        name: NSWorkspace.screensDidWakeNotification, object: nil)
-        ws.addObserver(self, selector: #selector(resume),
+        ws.addObserver(self, selector: #selector(resumeFromSystem),
                        name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
     }
 
-    @objc func pause() {
-        webViews().forEach { $0.evaluateJavaScript("window.pauseAnimation()") { _,_ in } }
+    func setupActivityObservers() {
+        let ws = NSWorkspace.shared.notificationCenter
+        ws.addObserver(self, selector: #selector(activeApplicationDidChange),
+                       name: NSWorkspace.didActivateApplicationNotification, object: nil)
     }
 
-    @objc func resume() {
-        webViews().forEach { $0.evaluateJavaScript("window.resumeAnimation()") { _,_ in } }
+    @objc func pauseForSystem() {
+        refreshLockScreenWallpaper()
+        pausedForSystem = true
+        refreshAnimationState()
     }
 
-    func webViews() -> [WKWebView] {
-        windows.compactMap { $0.contentView as? WKWebView }
+    @objc func resumeFromSystem() {
+        pausedForSystem = false
+        updateActivityPause()
+    }
+
+    @objc func activeApplicationDidChange() {
+        updateActivityPause()
+    }
+
+    func updateActivityPause(force: Bool = false) {
+        let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        pausedForActivity = bundleID != nil && bundleID != "com.apple.finder"
+        refreshAnimationState(force: force)
+    }
+
+    func refreshAnimationState(force: Bool = false) {
+        let shouldPause = pausedForSystem || pausedForActivity
+        guard force || shouldPause != animationPaused else { return }
+        animationPaused = shouldPause
+        gradientViews().forEach { $0.setPaused(shouldPause) }
+    }
+
+    func gradientViews() -> [GradientWallpaperView] {
+        windows.compactMap { $0.contentView as? GradientWallpaperView }
     }
 
     // MARK: - Menu bar
@@ -175,10 +453,9 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         win.backgroundColor = NSColor(deviceRed: 40/255, green: 40/255, blue: 40/255, alpha: 1)
         win.setFrame(screen.frame, display: true)
 
-        let wv = WKWebView(frame: CGRect(origin: .zero, size: screen.frame.size))
-        wv.setValue(false, forKey: "drawsBackground")
-        win.contentView = wv
-        wv.loadHTMLString(html, baseURL: nil)
+        let view = GradientWallpaperView(frame: CGRect(origin: .zero, size: screen.frame.size))
+        view.autoresizingMask = [.width, .height]
+        win.contentView = view
 
         win.orderFrontRegardless()
         return win

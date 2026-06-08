@@ -1,41 +1,101 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
-namespace GradientScreenSaver;
+namespace GradientWallpaper;
 
+// ── Win32 helpers ─────────────────────────────────────────────────────────────
+static class Win32
+{
+    public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+    [DllImport("user32.dll")] public static extern IntPtr FindWindow(string cls, string? wnd);
+    [DllImport("user32.dll")] public static extern IntPtr FindWindowEx(IntPtr parent, IntPtr after, string cls, string? wnd);
+    [DllImport("user32.dll")] public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, uint flags, uint timeout, out IntPtr result);
+    [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc proc, IntPtr lParam);
+    [DllImport("user32.dll")] public static extern IntPtr SetParent(IntPtr child, IntPtr parent);
+
+    // Spawn WorkerW (the layer behind desktop icons) and return its handle.
+    public static IntPtr GetWorkerW()
+    {
+        IntPtr progman = FindWindow("Progman", null);
+        SendMessageTimeout(progman, 0x052C, new IntPtr(0xD), new IntPtr(0x1), 0, 1000, out _);
+
+        IntPtr workerW = IntPtr.Zero;
+        EnumWindows((hWnd, _) =>
+        {
+            if (FindWindowEx(hWnd, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero)
+                workerW = FindWindowEx(IntPtr.Zero, hWnd, "WorkerW", null);
+            return true;
+        }, IntPtr.Zero);
+
+        return workerW;
+    }
+}
+
+// ── Entry point ───────────────────────────────────────────────────────────────
 static class Program
 {
     [STAThread]
-    static void Main(string[] args)
+    static void Main()
     {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
 
-        string mode = args.Length > 0 ? args[0].ToLower().TrimStart('/') : "s";
+        IntPtr workerW = Win32.GetWorkerW();
+        var forms = new List<WallpaperForm>();
 
-        if (mode == "c")
+        foreach (Screen screen in Screen.AllScreens)
         {
-            MessageBox.Show(
-                "Gradient Screensaver\n\nColors cycle automatically every 7 seconds.\nMove mouse or click to exit.",
-                "Gradient Screensaver", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var form = new WallpaperForm(screen.Bounds);
+            form.Show();
+            if (workerW != IntPtr.Zero)
+                Win32.SetParent(form.Handle, workerW);
+            forms.Add(form);
         }
-        else if (mode.StartsWith("p"))
+
+        // System tray icon
+        using var tray = new NotifyIcon
         {
-            // preview mode: skip
-        }
-        else
+            Text    = "Gradient Wallpaper",
+            Icon    = SystemIcons.Application,
+            Visible = true,
+        };
+        var menu = new ContextMenuStrip();
+        var header = new ToolStripMenuItem("Gradient Wallpaper") { Enabled = false };
+        menu.Items.Add(header);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("Quit", null, (_, _) =>
         {
-            foreach (Screen screen in Screen.AllScreens)
-                new ScreenSaverForm(screen.Bounds).Show();
-            Application.Run();
-        }
+            tray.Visible = false;
+            Application.Exit();
+        });
+        tray.ContextMenuStrip = menu;
+
+        // Pause on screen lock / sleep
+        SystemEvents.SessionSwitch += (_, e) =>
+        {
+            bool p = e.Reason == SessionSwitchReason.SessionLock;
+            bool r = e.Reason == SessionSwitchReason.SessionUnlock;
+            if (p || r) forms.ForEach(f => f.SetPaused(p));
+        };
+        SystemEvents.PowerModeChanged += (_, e) =>
+        {
+            if (e.Mode == PowerModes.Suspend) forms.ForEach(f => f.SetPaused(true));
+            if (e.Mode == PowerModes.Resume)  forms.ForEach(f => f.SetPaused(false));
+        };
+
+        Application.Run();
     }
 }
 
-class ScreenSaverForm : Form
+// ── Wallpaper form ─────────────────────────────────────────────────────────────
+class WallpaperForm : Form
 {
     static readonly Color[] Palette =
     {
@@ -62,40 +122,25 @@ class ScreenSaverForm : Form
     }
 
     readonly Blob[]  _blobs     = new Blob[3];
-    readonly Random  _rng       = new Random();
-    readonly Timer   _animTimer = new Timer();
-    readonly Timer   _colorTimer = new Timer();
+    readonly Random  _rng       = new();
+    readonly Timer   _animTimer = new();
+    readonly Timer   _colorTimer = new();
     readonly Stopwatch _clock = Stopwatch.StartNew();
     Bitmap?   _buf;
     Graphics? _g;
     double     _lastTickSeconds;
-    Point     _lastMouse;
-    bool      _firstMove = true;
+    bool      _paused;
 
-    public ScreenSaverForm(Rectangle bounds)
+    public WallpaperForm(Rectangle bounds)
     {
-        SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
-        Bounds          = bounds;
+        SetStyle(ControlStyles.AllPaintingInWmPaint |
+                 ControlStyles.UserPaint |
+                 ControlStyles.OptimizedDoubleBuffer, true);
         FormBorderStyle = FormBorderStyle.None;
-        TopMost         = true;
-        BackColor       = Color.Black;
-        Cursor.Hide();
+        Bounds          = bounds;
+        BackColor       = Color.FromArgb(40, 40, 40);
+        ShowInTaskbar   = false;
 
-        InitBlobs();
-
-        _lastTickSeconds = _clock.Elapsed.TotalSeconds;
-
-        _animTimer.Interval = 66;           // homepage mesh cadence
-        _animTimer.Tick    += OnTick;
-        _animTimer.Start();
-
-        _colorTimer.Interval = 7000;        // new colors every 7 s
-        _colorTimer.Tick    += (_, _) => RandomizeTargets();
-        _colorTimer.Start();
-    }
-
-    void InitBlobs()
-    {
         for (int i = 0; i < 3; i++)
         {
             var color = RandomColor();
@@ -117,7 +162,19 @@ class ScreenSaverForm : Form
                 ColorElapsed = ColorTransitionSeconds,
             };
         }
+
+        _lastTickSeconds = _clock.Elapsed.TotalSeconds;
+
+        _animTimer.Interval = 66;
+        _animTimer.Tick    += OnTick;
+        _animTimer.Start();
+
+        _colorTimer.Interval = 7000;
+        _colorTimer.Tick    += (_, _) => RandomizeTargets();
+        _colorTimer.Start();
     }
+
+    public void SetPaused(bool paused) => _paused = paused;
 
     void RandomizeTargets()
     {
@@ -154,6 +211,8 @@ class ScreenSaverForm : Form
 
     void OnTick(object? sender, EventArgs e)
     {
+        if (_paused) return;
+
         double now = _clock.Elapsed.TotalSeconds;
         float dt = (float)Math.Min(now - _lastTickSeconds, .25);
         _lastTickSeconds = now;
@@ -177,14 +236,13 @@ class ScreenSaverForm : Form
     protected override void OnPaint(PaintEventArgs e)
     {
         int w = Width, h = Height;
-
         if (_buf == null || _buf.Width != w || _buf.Height != h)
         {
             _buf?.Dispose(); _g?.Dispose();
             _buf = new Bitmap(w, h);
             _g   = Graphics.FromImage(_buf);
-            _g.SmoothingMode    = SmoothingMode.AntiAlias;
-            _g.CompositingMode  = CompositingMode.SourceOver;
+            _g.SmoothingMode   = SmoothingMode.AntiAlias;
+            _g.CompositingMode = CompositingMode.SourceOver;
         }
 
         _g!.Clear(Color.FromArgb(40, 40, 40));
@@ -217,16 +275,6 @@ class ScreenSaverForm : Form
         _g.FillPath(brush, path);
         _g.Restore(state);
     }
-
-    protected override void OnMouseMove(MouseEventArgs e)
-    {
-        if (_firstMove) { _lastMouse = e.Location; _firstMove = false; return; }
-        if (Math.Abs(e.X - _lastMouse.X) > 10 || Math.Abs(e.Y - _lastMouse.Y) > 10)
-            Application.Exit();
-    }
-
-    protected override void OnMouseDown(MouseEventArgs e) => Application.Exit();
-    protected override void OnKeyDown(KeyEventArgs e)     => Application.Exit();
 
     protected override void OnFormClosed(FormClosedEventArgs e)
     {

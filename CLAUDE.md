@@ -18,8 +18,11 @@ gradient-screensaver/
 │   ├── Info.plist
 │   └── Makefile
 ├── wallpaper/
-│   ├── GradientWallpaper.swift      # macOS 배경화면 — WKWebView @ desktop window level
+│   ├── GradientWallpaper.swift      # macOS 배경화면 — native NSView @ desktop window level
 │   └── Makefile
+├── wallpaper-win/
+│   ├── Program.cs                   # Windows 배경화면 — WorkerW behind desktop icons
+│   └── GradientWallpaper.csproj
 └── CLAUDE.md
 ```
 
@@ -63,7 +66,9 @@ make install-login  # 로그인 시 자동 실행 등록
 ## 동작 방식
 
 - 3개의 컬러 blob이 화면 위를 천천히 떠다님
-- 6초마다 각 blob의 목표 색상이 랜덤으로 변경, 부드럽게 lerp 전환
+- 각 blob은 실행마다 시작 위치, 속도, 크기, 비율, 회전이 랜덤으로 결정됨
+- 7초마다 각 blob의 목표 색상이 랜덤으로 변경, 6.5초 동안 부드럽게 전환
+- macOS 라이브 배경화면은 다른 앱 사용 중 타이머를 멈추고, 잠금화면용 정적 mesh PNG를 시스템 wallpaper로 세팅
 - 마우스 움직임 / 클릭 / 키 입력 시 종료
 - Windows: 멀티 모니터 지원
 
@@ -71,10 +76,10 @@ make install-login  # 로그인 시 자동 실행 등록
 
 ## 디자인 컨셉
 
-- **배경색:** `#1c1c1c` (거의 검정)
-- **blob 팔레트:** Gruvbox accent 8색 (yellow, orange, red, pink, green, aqua, teal, blue)
-- blob은 중심 `alpha 133`, 가장자리 `alpha 0` 의 radial gradient
-- blob 반지름: 화면 단변의 60~70%
+- **배경색:** `#282828`
+- **blob 팔레트:** Gruvbox accent 10색
+- blob은 CSS blur 기반 홈페이지 구현을 네이티브 radial mesh로 근사
+- blob 크기: 화면 단변의 약 77~97%, blur는 단변의 22%
 
 ---
 

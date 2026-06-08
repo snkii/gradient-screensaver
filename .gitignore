@@ -1,0 +1,10 @@
+.DS_Store
+bin/
+obj/
+dist/
+
+macos/GradientScreenSaver.saver/
+wallpaper/GradientWallpaper
+wallpaper/GradientWallpaper.app/
+wallpaper-win/bin/
+wallpaper-win/obj/

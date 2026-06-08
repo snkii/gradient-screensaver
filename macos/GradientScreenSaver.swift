@@ -4,26 +4,35 @@ import CoreGraphics
 
 public class GradientScreenSaverView: ScreenSaverView {
 
-    private let palette: [(CGFloat, CGFloat, CGFloat)] = [
-        (250/255, 189/255,  47/255),
-        (254/255, 128/255,  25/255),
-        (251/255,  73/255,  52/255),
-        (211/255, 134/255, 155/255),
-        (184/255, 187/255,  38/255),
-        (142/255, 192/255, 124/255),
-        (131/255, 165/255, 152/255),
-        ( 69/255, 133/255, 136/255),
-    ]
+    private struct RGB {
+        var r, g, b: CGFloat
+    }
 
     private struct Blob {
-        var x, y, vx, vy, r: CGFloat
-        var cr, cg, cb: CGFloat
-        var tr, tg, tb: CGFloat
+        var x, y, vx, vy, vr, radius, sx, sy, rot, colorElapsed: CGFloat
+        var current, start, target: RGB
     }
+
+    private let palette: [RGB] = [
+        RGB(r: 250/255, g: 189/255, b:  47/255),
+        RGB(r: 215/255, g: 153/255, b:  33/255),
+        RGB(r: 254/255, g: 128/255, b:  25/255),
+        RGB(r: 251/255, g:  73/255, b:  52/255),
+        RGB(r: 184/255, g: 187/255, b:  38/255),
+        RGB(r: 142/255, g: 192/255, b: 124/255),
+        RGB(r: 131/255, g: 165/255, b: 152/255),
+        RGB(r:  69/255, g: 133/255, b: 136/255),
+        RGB(r: 211/255, g: 134/255, b: 155/255),
+        RGB(r: 146/255, g: 131/255, b: 116/255),
+    ]
+
+    private let blobSizeFactor: CGFloat = 0.90
+    private let blurFactor: CGFloat = 0.22
+    private let colorTransitionSeconds: CGFloat = 6.5
 
     private var blobs: [Blob] = []
     private var colorTimer: Timer?
-    private let ciCtx = CIContext()
+    private var lastFrameTime: TimeInterval?
 
     public override init?(frame: NSRect, isPreview: Bool) {
         super.init(frame: frame, isPreview: isPreview)
@@ -36,50 +45,88 @@ public class GradientScreenSaverView: ScreenSaverView {
     }
 
     private func setup() {
-        animationTimeInterval = 1.0 / 60.0
+        animationTimeInterval = 1.0 / 15.0
 
-        let positions:  [(CGFloat, CGFloat)] = [(0.22, 0.45), (0.78, 0.20), (0.52, 0.78)]
-        let velocities: [(CGFloat, CGFloat)] = [(0.00022, 0.00016), (-0.00018, 0.00021), (0.00014, -0.00023)]
-        let radii:      [CGFloat]            = [0.90, 0.90, 0.90]
-
-        for i in 0..<3 {
-            let c = palette[i]
+        for _ in 0..<3 {
+            let color = randomColor()
+            let velocity = randomVelocity()
             blobs.append(Blob(
-                x: positions[i].0,  y: positions[i].1,
-                vx: velocities[i].0, vy: velocities[i].1,
-                r: radii[i],
-                cr: c.0, cg: c.1, cb: c.2,
-                tr: c.0, tg: c.1, tb: c.2
+                x: randomBetween(-0.12, 1.12),
+                y: randomBetween(-0.10, 1.10),
+                vx: velocity.vx,
+                vy: velocity.vy,
+                vr: randomBetween(-0.8, 0.8),
+                radius: randomBetween(0.86, 1.08),
+                sx: randomBetween(0.85, 1.38),
+                sy: randomBetween(0.78, 1.28),
+                rot: randomBetween(0, 360),
+                colorElapsed: colorTransitionSeconds,
+                current: color,
+                start: color,
+                target: color
             ))
         }
 
-        randomizeTargets()
-
-        colorTimer = Timer.scheduledTimer(withTimeInterval: 6.0, repeats: true) { [weak self] _ in
+        colorTimer = Timer.scheduledTimer(withTimeInterval: 7.0, repeats: true) { [weak self] _ in
             self?.randomizeTargets()
         }
     }
 
+    deinit {
+        colorTimer?.invalidate()
+    }
+
     private func randomizeTargets() {
-        let shuffled = palette.shuffled()
         for i in 0..<blobs.count {
-            blobs[i].tr = shuffled[i].0
-            blobs[i].tg = shuffled[i].1
-            blobs[i].tb = shuffled[i].2
+            blobs[i].start = blobs[i].current
+            blobs[i].target = randomColor()
+            blobs[i].colorElapsed = 0
         }
     }
 
-    private func lerp(_ a: CGFloat, _ b: CGFloat) -> CGFloat { a + (b - a) * 0.025 }
+    private func randomColor() -> RGB {
+        palette[Int.random(in: 0..<palette.count)]
+    }
+
+    private func randomBetween(_ min: CGFloat, _ max: CGFloat) -> CGFloat {
+        min + CGFloat.random(in: 0...1) * (max - min)
+    }
+
+    private func randomVelocity() -> (vx: CGFloat, vy: CGFloat) {
+        let angle = randomBetween(0, CGFloat.pi * 2)
+        let speed = randomBetween(0.0026, 0.0054)
+        return (cos(angle) * speed, sin(angle) * speed)
+    }
+
+    private func easeInOut(_ t: CGFloat) -> CGFloat {
+        let x = min(max(t, 0), 1)
+        return x * x * (3 - 2 * x)
+    }
+
+    private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: CGFloat) -> CGFloat {
+        a + (b - a) * t
+    }
+
+    private func lerp(_ a: RGB, _ b: RGB, _ t: CGFloat) -> RGB {
+        RGB(r: lerp(a.r, b.r, t), g: lerp(a.g, b.g, t), b: lerp(a.b, b.b, t))
+    }
 
     public override func animateOneFrame() {
+        let now = Date.timeIntervalSinceReferenceDate
+        let dt = CGFloat(min(now - (lastFrameTime ?? now), 0.25))
+        lastFrameTime = now
+
         for i in 0..<blobs.count {
-            blobs[i].x += blobs[i].vx
-            blobs[i].y += blobs[i].vy
+            blobs[i].x += blobs[i].vx * dt
+            blobs[i].y += blobs[i].vy * dt
+            blobs[i].rot += blobs[i].vr * dt
             if blobs[i].x < -0.2 || blobs[i].x > 1.2 { blobs[i].vx = -blobs[i].vx }
             if blobs[i].y < -0.2 || blobs[i].y > 1.2 { blobs[i].vy = -blobs[i].vy }
-            blobs[i].cr = lerp(blobs[i].cr, blobs[i].tr)
-            blobs[i].cg = lerp(blobs[i].cg, blobs[i].tg)
-            blobs[i].cb = lerp(blobs[i].cb, blobs[i].tb)
+            if blobs[i].colorElapsed < colorTransitionSeconds {
+                blobs[i].colorElapsed += dt
+                blobs[i].current = lerp(blobs[i].start, blobs[i].target,
+                                        easeInOut(blobs[i].colorElapsed / colorTransitionSeconds))
+            }
         }
         setNeedsDisplay(bounds)
     }
@@ -87,49 +134,49 @@ public class GradientScreenSaverView: ScreenSaverView {
     public override func draw(_ rect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
 
-        ctx.setFillColor(CGColor(red: 28/255, green: 28/255, blue: 28/255, alpha: 1))
+        ctx.setFillColor(CGColor(red: 40/255, green: 40/255, blue: 40/255, alpha: 1))
         ctx.fill(bounds)
 
         let minDim = min(bounds.width, bounds.height)
         for b in blobs {
+            let size = b.radius * blobSizeFactor * minDim
             drawBlob(ctx: ctx,
                      cx: b.x * bounds.width,
                      cy: b.y * bounds.height,
-                     r:  b.r * minDim,
-                     r_: b.cr, g_: b.cg, b_: b.cb)
+                     size: size,
+                     blur: blurFactor * minDim,
+                     sx: b.sx,
+                     sy: b.sy,
+                     rot: b.rot,
+                     color: b.current)
         }
     }
 
-    private func drawBlob(ctx: CGContext, cx: CGFloat, cy: CGFloat, r: CGFloat,
-                          r_: CGFloat, g_: CGFloat, b_: CGFloat) {
-        let circleR  = r * 0.5
-        let blurSigma = r * 0.5
-        let padding  = blurSigma * 3.5
-        let bufSize  = Int(circleR * 2 + padding * 2) + 4
-        guard bufSize > 0,
-              let offscreen = CGContext(data: nil, width: bufSize, height: bufSize,
-                                       bitsPerComponent: 8, bytesPerRow: 0,
-                                       space: CGColorSpaceCreateDeviceRGB(),
-                                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
-        else { return }
+    private func drawBlob(ctx: CGContext, cx: CGFloat, cy: CGFloat, size: CGFloat,
+                          blur: CGFloat, sx: CGFloat, sy: CGFloat, rot: CGFloat,
+                          color: RGB) {
+        let radius = size / 2 + blur * 2
+        let colors = [
+            CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.70),
+            CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.52),
+            CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.18),
+            CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.0),
+        ] as CFArray
+        let locations: [CGFloat] = [0, 0.34, 0.72, 1]
+        guard let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                                        colors: colors,
+                                        locations: locations) else { return }
 
-        let center = CGFloat(bufSize) / 2
-        offscreen.setFillColor(CGColor(colorSpace: CGColorSpaceCreateDeviceRGB(),
-                                       components: [r_, g_, b_, 0.7])!)
-        offscreen.addEllipse(in: CGRect(x: center - circleR, y: center - circleR,
-                                        width: circleR * 2, height: circleR * 2))
-        offscreen.fillPath()
-
-        guard let rawImg = offscreen.makeImage() else { return }
-        let ciImg   = CIImage(cgImage: rawImg)
-        let blurred = ciImg.applyingFilter("CIGaussianBlur", parameters: ["inputRadius": blurSigma])
-        guard let blurredCG = ciCtx.createCGImage(blurred, from: blurred.extent) else { return }
-
-        ctx.draw(blurredCG, in: CGRect(
-            x: cx - CGFloat(blurredCG.width) / 2,
-            y: cy - CGFloat(blurredCG.height) / 2,
-            width:  CGFloat(blurredCG.width),
-            height: CGFloat(blurredCG.height)
-        ))
+        ctx.saveGState()
+        ctx.translateBy(x: cx, y: cy)
+        ctx.rotate(by: rot * CGFloat.pi / 180)
+        ctx.scaleBy(x: sx, y: sy)
+        ctx.drawRadialGradient(gradient,
+                               startCenter: .zero,
+                               startRadius: 0,
+                               endCenter: .zero,
+                               endRadius: radius,
+                               options: [.drawsAfterEndLocation])
+        ctx.restoreGState()
     }
 }

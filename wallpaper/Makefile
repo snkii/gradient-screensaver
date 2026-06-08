@@ -12,7 +12,6 @@ build:
 		-target $(TARGET) \
 		-sdk "$(SDK)" \
 		-framework AppKit \
-		-framework WebKit \
 		-framework CoreGraphics \
 		-o $(BINARY) \
 		GradientWallpaper.swift

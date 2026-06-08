@@ -2,9 +2,9 @@
 
 **[English](#gradient-screensaver) · [한국어](#한국어)**
 
-**Animated mesh gradient for your desktop — Windows screensaver & macOS wallpaper.**
+**Animated mesh gradient for your desktop — Windows screensaver, Windows wallpaper & macOS wallpaper.**
 
-Soft color blobs drift across a dark background, slowly cycling through a handpicked palette. Inspired by the background on [seon.uk](https://seon.uk).
+Soft organic color blobs drift across a dark background, slowly cycling through a handpicked palette. Inspired by the background on [seon.uk](https://seon.uk).
 
 ---
 
@@ -17,17 +17,19 @@ Soft color blobs drift across a dark background, slowly cycling through a handpi
 | Platform | Format | Tech |
 |----------|--------|------|
 | 🪟 Windows | `.scr` screensaver | C# · .NET 8 · WinForms |
+| 🪟 Windows | Live wallpaper | C# · .NET 8 · WinForms · WorkerW |
 | 🍎 macOS | `.saver` screensaver | Swift · ScreenSaverView |
-| 🍎 macOS | Live wallpaper | Swift · WKWebView |
+| 🍎 macOS | Live wallpaper | Swift · AppKit |
 
 ---
 
 ## Features
 
-- **3 floating color blobs** that drift continuously across the screen
-- **Auto-cycles** — palette shifts every 6 seconds with smooth color lerp
-- **Gruvbox-inspired palette** — 8 handpicked accent colors (yellow, orange, red, pink, green, aqua, teal, blue)
+- **3 organic color blobs** with randomized position, velocity, size, stretch, and rotation
+- **Auto-cycles** — palette shifts every 7 seconds with smooth 6.5 second transitions
+- **Gruvbox-inspired palette** — 10 handpicked accent colors
 - **Auto-pauses on sleep / lock screen** (macOS wallpaper)
+- **Static mesh lock screen background** on macOS by syncing a generated wallpaper image
 - Zero dependencies beyond the platform SDK
 
 ---
@@ -35,6 +37,8 @@ Soft color blobs drift across a dark background, slowly cycling through a handpi
 ## Install
 
 ### 🪟 Windows — Screensaver
+
+**[⬇ Download GradientScreenSaver-Windows-x64.zip](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientScreenSaver-Windows-x64.zip)**
 
 > Requires [.NET 8 SDK](https://dotnet.microsoft.com/download)
 
@@ -51,7 +55,23 @@ dotnet publish -c Release
 
 ---
 
+### 🪟 Windows — Live Wallpaper
+
+**[⬇ Download GradientWallpaper-Windows-x64.zip](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientWallpaper-Windows-x64.zip)**
+
+```powershell
+git clone https://github.com/snkii/gradient-screensaver
+cd gradient-screensaver\wallpaper-win
+dotnet publish -c Release
+```
+
+Run `bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`. A tray icon lets you quit.
+
+---
+
 ### 🍎 macOS — Screensaver
+
+**[⬇ Download GradientScreenSaver-macOS.zip](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientScreenSaver-macOS.zip)**
 
 ```bash
 git clone https://github.com/snkii/gradient-screensaver
@@ -65,7 +85,7 @@ Open **System Settings → Screen Saver** and select **GradientScreenSaver**.
 
 ### 🍎 macOS — Live Wallpaper
 
-**[⬇ Download GradientWallpaper-macOS.zip](https://github.com/snkii/gradient-screensaver/releases/latest)**
+**[⬇ Download GradientWallpaper-macOS.zip](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientWallpaper-macOS.zip)**
 
 1. Unzip and open `GradientWallpaper.app`
 2. A ✦ icon appears in the menu bar
@@ -90,18 +110,20 @@ A ✦ icon in the menu bar lets you quit. No Dock icon.
 
 ## Color Palette
 
-The gradient cycles through 8 Gruvbox accent colors:
+The gradient cycles through 10 Gruvbox accent colors:
 
 <table>
 <tr>
   <td align="center"><img src="https://singlecolorimage.com/get/fabd2f/40x40" width="40" height="40"><br><code>#fabd2f</code></td>
+  <td align="center"><img src="https://singlecolorimage.com/get/d79921/40x40" width="40" height="40"><br><code>#d79921</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/fe8019/40x40" width="40" height="40"><br><code>#fe8019</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/fb4934/40x40" width="40" height="40"><br><code>#fb4934</code></td>
-  <td align="center"><img src="https://singlecolorimage.com/get/d3869b/40x40" width="40" height="40"><br><code>#d3869b</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/b8bb26/40x40" width="40" height="40"><br><code>#b8bb26</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/8ec07c/40x40" width="40" height="40"><br><code>#8ec07c</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/83a598/40x40" width="40" height="40"><br><code>#83a598</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/458588/40x40" width="40" height="40"><br><code>#458588</code></td>
+  <td align="center"><img src="https://singlecolorimage.com/get/d3869b/40x40" width="40" height="40"><br><code>#d3869b</code></td>
+  <td align="center"><img src="https://singlecolorimage.com/get/928374/40x40" width="40" height="40"><br><code>#928374</code></td>
 </tr>
 </table>
 
@@ -109,7 +131,7 @@ The gradient cycles through 8 Gruvbox accent colors:
 
 ## Live Demo
 
-The same animation runs as the background of **[seon.uk](https://seon.uk)** — click anywhere to cycle colors.
+The same autonomous mesh animation runs as the background of **[seon.uk](https://seon.uk)**.
 
 ---
 
@@ -124,9 +146,9 @@ MIT
 
 **[English](#gradient-screensaver) · [한국어](#한국어)**
 
-**데스크탑을 위한 움직이는 메시 그래디언트 — Windows 화면보호기 & macOS 배경화면.**
+**데스크탑을 위한 움직이는 메시 그래디언트 — Windows 화면보호기, Windows 배경화면 & macOS 배경화면.**
 
-부드러운 색상 블롭이 어두운 배경 위를 천천히 떠다니며 Gruvbox 팔레트를 순환합니다. [seon.uk](https://seon.uk) 배경화면에서 영감을 받았습니다.
+부드러운 유기적 색상 블롭이 어두운 배경 위를 천천히 떠다니며 Gruvbox 팔레트를 순환합니다. [seon.uk](https://seon.uk) 배경화면에서 영감을 받았습니다.
 
 ---
 
@@ -135,17 +157,19 @@ MIT
 | 플랫폼 | 형식 | 기술 |
 |--------|------|------|
 | 🪟 Windows | `.scr` 화면보호기 | C# · .NET 8 · WinForms |
+| 🪟 Windows | 라이브 배경화면 | C# · .NET 8 · WinForms · WorkerW |
 | 🍎 macOS | `.saver` 화면보호기 | Swift · ScreenSaverView |
-| 🍎 macOS | 라이브 배경화면 | Swift · WKWebView |
+| 🍎 macOS | 라이브 배경화면 | Swift · AppKit |
 
 ---
 
 ## 특징
 
-- **3개의 색상 블롭**이 화면을 부드럽게 떠다님
-- **자동 색상 순환** — 6초마다 팔레트 변경, 부드러운 색상 전환
-- **Gruvbox 팔레트** — 8가지 엑센트 컬러 (노랑, 주황, 빨강, 핑크, 초록, 아쿠아, 틸, 파랑)
+- **3개의 유기적 색상 블롭**이 위치, 속도, 크기, 비율, 회전을 랜덤으로 갖고 떠다님
+- **자동 색상 순환** — 7초마다 팔레트 변경, 6.5초 동안 부드럽게 전환
+- **Gruvbox 팔레트** — 10가지 엑센트 컬러
 - **절전 모드/잠금화면 자동 일시정지** (macOS 배경화면)
+- **macOS 잠금화면 정적 mesh 배경** — 생성된 wallpaper 이미지를 시스템 배경으로 동기화
 - 플랫폼 SDK 외 별도 의존성 없음
 
 ---
@@ -153,6 +177,8 @@ MIT
 ## 설치
 
 ### 🪟 Windows — 화면보호기
+
+**[⬇ GradientScreenSaver-Windows-x64.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientScreenSaver-Windows-x64.zip)**
 
 > [.NET 8 SDK](https://dotnet.microsoft.com/download) 필요
 
@@ -169,7 +195,23 @@ dotnet publish -c Release
 
 ---
 
+### 🪟 Windows — 라이브 배경화면
+
+**[⬇ GradientWallpaper-Windows-x64.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientWallpaper-Windows-x64.zip)**
+
+```powershell
+git clone https://github.com/snkii/gradient-screensaver
+cd gradient-screensaver\wallpaper-win
+dotnet publish -c Release
+```
+
+`bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`를 실행하세요. 트레이 아이콘에서 종료할 수 있습니다.
+
+---
+
 ### 🍎 macOS — 화면보호기
+
+**[⬇ GradientScreenSaver-macOS.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientScreenSaver-macOS.zip)**
 
 ```bash
 git clone https://github.com/snkii/gradient-screensaver
@@ -183,7 +225,7 @@ make install
 
 ### 🍎 macOS — 라이브 배경화면
 
-**[⬇ GradientWallpaper-macOS.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest)**
+**[⬇ GradientWallpaper-macOS.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientWallpaper-macOS.zip)**
 
 1. 압축 해제 후 `GradientWallpaper.app` 실행
 2. 메뉴바에 ✦ 아이콘이 나타남
@@ -208,18 +250,20 @@ make install-login  # 로그인 항목에도 자동 등록
 
 ## 색상 팔레트
 
-Gruvbox 팔레트의 8가지 엑센트 컬러:
+Gruvbox 팔레트의 10가지 엑센트 컬러:
 
 <table>
 <tr>
   <td align="center"><img src="https://singlecolorimage.com/get/fabd2f/40x40" width="40" height="40"><br><code>#fabd2f</code></td>
+  <td align="center"><img src="https://singlecolorimage.com/get/d79921/40x40" width="40" height="40"><br><code>#d79921</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/fe8019/40x40" width="40" height="40"><br><code>#fe8019</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/fb4934/40x40" width="40" height="40"><br><code>#fb4934</code></td>
-  <td align="center"><img src="https://singlecolorimage.com/get/d3869b/40x40" width="40" height="40"><br><code>#d3869b</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/b8bb26/40x40" width="40" height="40"><br><code>#b8bb26</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/8ec07c/40x40" width="40" height="40"><br><code>#8ec07c</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/83a598/40x40" width="40" height="40"><br><code>#83a598</code></td>
   <td align="center"><img src="https://singlecolorimage.com/get/458588/40x40" width="40" height="40"><br><code>#458588</code></td>
+  <td align="center"><img src="https://singlecolorimage.com/get/d3869b/40x40" width="40" height="40"><br><code>#d3869b</code></td>
+  <td align="center"><img src="https://singlecolorimage.com/get/928374/40x40" width="40" height="40"><br><code>#928374</code></td>
 </tr>
 </table>
 
@@ -227,7 +271,7 @@ Gruvbox 팔레트의 8가지 엑센트 컬러:
 
 ## 라이브 데모
 
-동일한 애니메이션이 **[seon.uk](https://seon.uk)** 배경화면으로 실행 중입니다 — 아무 곳이나 클릭하면 색상이 바뀝니다.
+동일한 자율 mesh 애니메이션이 **[seon.uk](https://seon.uk)** 배경화면으로 실행 중입니다.
 
 ---
 
