@@ -1168,19 +1168,19 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
             context.setLineCap(.round)
             context.setLineJoin(.round)
 
-            let circle = CGRect(x: 3.15, y: 3.15, width: 11.7, height: 11.7)
-            context.setLineWidth(1.45)
+            let circle = CGRect(x: 2.1, y: 2.1, width: 13.8, height: 13.8)
+            context.setLineWidth(1.5)
             context.strokeEllipse(in: circle)
 
-            context.setLineWidth(1.75)
+            context.setLineWidth(1.85)
             context.beginPath()
-            context.move(to: CGPoint(x: 9.0, y: 14.85))
+            context.move(to: CGPoint(x: 2.1, y: 9.0))
             context.addCurve(to: CGPoint(x: 9.0, y: 9.0),
-                             control1: CGPoint(x: 5.75, y: 14.35),
-                             control2: CGPoint(x: 5.75, y: 9.65))
-            context.addCurve(to: CGPoint(x: 9.0, y: 3.15),
-                             control1: CGPoint(x: 12.25, y: 8.35),
-                             control2: CGPoint(x: 12.25, y: 3.65))
+                             control1: CGPoint(x: 3.35, y: 12.95),
+                             control2: CGPoint(x: 7.45, y: 12.95))
+            context.addCurve(to: CGPoint(x: 15.9, y: 9.0),
+                             control1: CGPoint(x: 10.55, y: 5.05),
+                             control2: CGPoint(x: 14.65, y: 5.05))
             context.strokePath()
         }
         image.unlockFocus()
