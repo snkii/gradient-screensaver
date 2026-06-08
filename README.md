@@ -18,6 +18,7 @@ Soft organic color blobs drift across a dark background, slowly cycling through 
 |----------|--------|------|
 | 🪟 Windows | `.scr` screensaver | C# · .NET 8 · WinForms |
 | 🪟 Windows | Live wallpaper | C# · .NET 8 · WinForms · WorkerW |
+| 🪟 Windows | Theme template | `.theme` |
 | 🍎 macOS | `.saver` screensaver | Swift · ScreenSaverView |
 | 🍎 macOS | Wallpaper | Swift · AppKit |
 
@@ -54,6 +55,8 @@ dotnet publish -c Release
 3. Copy to `C:\Windows\System32\`
 4. Right-click desktop → Personalize → Screen Saver → **GradientScreenSaver**
 
+Optional: after copying the `.scr`, double-click `windows-theme\SeonukGradient.theme` to apply the matching Windows theme template.
+
 ---
 
 ### 🪟 Windows — Live Wallpaper
@@ -67,6 +70,8 @@ dotnet publish -c Release
 ```
 
 Run `bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`. A tray icon lets you quit.
+
+The Windows theme template can select the screensaver and colors, but the live wallpaper app still runs separately.
 
 ---
 
@@ -161,6 +166,7 @@ MIT. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 |--------|------|------|
 | 🪟 Windows | `.scr` 화면보호기 | C# · .NET 8 · WinForms |
 | 🪟 Windows | 라이브 배경화면 | C# · .NET 8 · WinForms · WorkerW |
+| 🪟 Windows | 테마 템플릿 | `.theme` |
 | 🍎 macOS | `.saver` 화면보호기 | Swift · ScreenSaverView |
 | 🍎 macOS | 배경화면 | Swift · AppKit |
 
@@ -197,6 +203,8 @@ dotnet publish -c Release
 3. `C:\Windows\System32\` 에 복사
 4. 바탕화면 우클릭 → 개인 설정 → 화면 보호기 → **GradientScreenSaver** 선택
 
+선택 사항: `.scr`를 복사한 뒤 `windows-theme\SeonukGradient.theme`을 더블클릭하면 맞춰 둔 Windows 테마 템플릿을 적용할 수 있습니다.
+
 ---
 
 ### 🪟 Windows — 라이브 배경화면
@@ -210,6 +218,8 @@ dotnet publish -c Release
 ```
 
 `bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`를 실행하세요. 트레이 아이콘에서 종료할 수 있습니다.
+
+Windows 테마 템플릿은 화면보호기와 색상 설정을 지정할 수 있지만, 라이브 배경화면 앱은 별도로 실행됩니다.
 
 ---
 

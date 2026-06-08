@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace GradientScreenSaver;
@@ -55,10 +56,16 @@ class ScreenSaverForm : Form
     const float BlobSizeFactor = .90f;
     const float BlurFactor = .22f;
     const float ColorTransitionSeconds = 6.5f;
-    const int FineGrainTileSize = 96;
-    const int CoarseGrainTileSize = 360;
-    const int FineGrainAlpha = 11;
+    const int FineGrainTileSize = 731;
+    const int CoarseGrainTileSize = 1543;
+    const int FineGrainAlpha = 12;
     const int CoarseGrainAlpha = 5;
+    const int FineGrainContrast = 46;
+    const int CoarseGrainContrast = 26;
+    const float FineGrainOffsetX = -211f;
+    const float FineGrainOffsetY = -397f;
+    const float CoarseGrainOffsetX = -863f;
+    const float CoarseGrainOffsetY = -541f;
 
     struct Blob
     {
@@ -219,16 +226,16 @@ class ScreenSaverForm : Form
     {
         using var linear = new LinearGradientBrush(
             new Rectangle(0, 0, Math.Max(width, 1), Math.Max(height, 1)),
-            Color.FromArgb(16, 251, 73, 52),
-            Color.FromArgb(14, 69, 133, 136),
+            Color.FromArgb(10, 251, 73, 52),
+            Color.FromArgb(9, 69, 133, 136),
             135f);
         linear.InterpolationColors = new ColorBlend
         {
             Colors = new[]
             {
-                Color.FromArgb(16, 251, 73, 52),
-                Color.FromArgb(7, 184, 187, 38),
-                Color.FromArgb(14, 69, 133, 136),
+                Color.FromArgb(10, 251, 73, 52),
+                Color.FromArgb(4, 184, 187, 38),
+                Color.FromArgb(9, 69, 133, 136),
             },
             Positions = new[] { 0f, .45f, 1f }
         };
@@ -239,7 +246,7 @@ class ScreenSaverForm : Form
         using var radial = new PathGradientBrush(path)
         {
             CenterPoint = new PointF(width * .48f, height * .42f),
-            CenterColor = Color.FromArgb(19, 250, 189, 47),
+            CenterColor = Color.FromArgb(12, 250, 189, 47),
             SurroundColors = new[] { Color.FromArgb(0, 40, 40, 40) }
         };
         _g.FillPath(radial, path);
@@ -249,30 +256,61 @@ class ScreenSaverForm : Form
     {
         if (_fineGrainBrush == null)
         {
-            _fineGrainTile = CreateGrainTile(FineGrainTileSize, FineGrainAlpha, 0x5E0A);
+            _fineGrainTile = CreateGrainTile(FineGrainTileSize, FineGrainAlpha, FineGrainContrast, 0x5E0A);
             _fineGrainBrush = new TextureBrush(_fineGrainTile, WrapMode.Tile);
+            _fineGrainBrush.TranslateTransform(FineGrainOffsetX, FineGrainOffsetY);
         }
         if (_coarseGrainBrush == null)
         {
-            _coarseGrainTile = CreateGrainTile(CoarseGrainTileSize, CoarseGrainAlpha, 0xC0A4);
+            _coarseGrainTile = CreateGrainTile(CoarseGrainTileSize, CoarseGrainAlpha, CoarseGrainContrast, 0xC0A4);
             _coarseGrainBrush = new TextureBrush(_coarseGrainTile, WrapMode.Tile);
+            _coarseGrainBrush.TranslateTransform(CoarseGrainOffsetX, CoarseGrainOffsetY);
         }
 
         _g!.FillRectangle(_coarseGrainBrush, 0, 0, width, height);
         _g.FillRectangle(_fineGrainBrush, 0, 0, width, height);
     }
 
-    static Bitmap CreateGrainTile(int size, int alpha, int seed)
+    static uint NextFilmGrainSeed(ref uint seed)
+    {
+        seed ^= seed << 13;
+        seed ^= seed >> 17;
+        seed ^= seed << 5;
+        return seed;
+    }
+
+    static Bitmap CreateGrainTile(int size, int alpha, int contrast, uint seed)
     {
         var bmp = new Bitmap(size, size, PixelFormat.Format32bppPArgb);
-        var rng = new Random(seed);
-
-        for (int y = 0; y < size; y++)
-        for (int x = 0; x < size; x++)
+        var rect = new Rectangle(0, 0, size, size);
+        var data = bmp.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
+        try
         {
-            bool light = rng.Next(2) == 0;
-            int value = light ? 255 : 0;
-            bmp.SetPixel(x, y, Color.FromArgb(alpha, value, value, value));
+            int stride = data.Stride;
+            var pixels = new byte[stride * size];
+            uint state = seed == 0 ? 0x9e3779b9u : seed;
+
+            for (int y = 0; y < size; y++)
+            {
+                int row = y * stride;
+                for (int x = 0; x < size; x++)
+                {
+                    int raw = unchecked((byte)NextFilmGrainSeed(ref state));
+                    int value = Math.Clamp(128 + ((raw - 128) * contrast / 128), 0, 255);
+                    int premultiplied = value * alpha / 255;
+                    int offset = row + x * 4;
+                    pixels[offset] = (byte)premultiplied;
+                    pixels[offset + 1] = (byte)premultiplied;
+                    pixels[offset + 2] = (byte)premultiplied;
+                    pixels[offset + 3] = (byte)alpha;
+                }
+            }
+
+            Marshal.Copy(pixels, 0, data.Scan0, pixels.Length);
+        }
+        finally
+        {
+            bmp.UnlockBits(data);
         }
 
         return bmp;

@@ -23,6 +23,9 @@ seonuk-gradient/
 ├── wallpaper-win/
 │   ├── Program.cs                   # Windows 배경화면 — WorkerW behind desktop icons
 │   └── GradientWallpaper.csproj
+├── windows-theme/
+│   ├── SeonukGradient.theme          # Windows Personalization theme template
+│   └── README.md
 └── CLAUDE.md
 ```
 
@@ -85,7 +88,8 @@ make install-login  # 로그인 시 자동 실행 등록
 - blob은 CSS blur 기반 홈페이지 구현을 네이티브 radial mesh로 근사
 - blob 크기: 화면 단변의 약 77~97%, blur는 단변의 22%
 - 모든 렌더러는 홈페이지와 맞춘 film grain/tone pass를 마지막에 적용
-- Windows GDI+ 렌더러는 4K gradient banding을 더 잘 흩뜨리기 위해 fine/coarse grain을 macOS보다 강한 alpha로 적용
+- Windows GDI+ 렌더러와 macOS 렌더러는 같은 fine/coarse grain theme 값을 사용
+- `windows-theme/SeonukGradient.theme`는 Windows Personalization에서 화면보호기/색상 테마를 지정하는 템플릿이며, WorkerW live wallpaper 앱은 별도 실행
 
 ---
 
