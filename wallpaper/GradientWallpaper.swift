@@ -1165,8 +1165,8 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
             button.attributedTitle = NSAttributedString(
                 string: "🇰🇷",
                 attributes: [
-                    .font: NSFont.systemFont(ofSize: 14),
-                    .baselineOffset: -2.0
+                    .font: NSFont.systemFont(ofSize: 16),
+                    .baselineOffset: -2.5
                 ]
             )
             button.alignment = .center
