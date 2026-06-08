@@ -1158,43 +1158,12 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Menu bar
 
-    func makeStatusIcon() -> NSImage {
-        let image = NSImage(size: NSSize(width: 18, height: 18))
-        image.lockFocus()
-        if let context = NSGraphicsContext.current?.cgContext {
-            context.setShouldAntialias(true)
-            context.setStrokeColor(NSColor.white.cgColor)
-            context.setFillColor(NSColor.white.cgColor)
-            context.setLineCap(.round)
-            context.setLineJoin(.round)
-
-            let circle = CGRect(x: 2.1, y: 2.1, width: 13.8, height: 13.8)
-            context.setLineWidth(1.5)
-            context.strokeEllipse(in: circle)
-
-            context.setLineWidth(1.85)
-            context.beginPath()
-            context.move(to: CGPoint(x: 2.1, y: 9.0))
-            context.addCurve(to: CGPoint(x: 9.0, y: 9.0),
-                             control1: CGPoint(x: 3.35, y: 5.05),
-                             control2: CGPoint(x: 7.45, y: 5.05))
-            context.addCurve(to: CGPoint(x: 15.9, y: 9.0),
-                             control1: CGPoint(x: 10.55, y: 12.95),
-                             control2: CGPoint(x: 14.65, y: 12.95))
-            context.strokePath()
-        }
-        image.unlockFocus()
-        image.isTemplate = false
-        return image
-    }
-
     func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem?.button {
-            button.image = makeStatusIcon()
-            button.imagePosition = .imageOnly
-            button.imageScaling = .scaleProportionallyDown
-            button.title = ""
+            button.image = nil
+            button.title = "🇰🇷"
+            button.font = NSFont.systemFont(ofSize: 14)
             button.alignment = .center
             button.toolTip = "Gradient Wallpaper"
             button.setAccessibilityLabel("Gradient Wallpaper")
