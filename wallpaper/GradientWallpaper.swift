@@ -1161,12 +1161,12 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     func makeStatusIcon() -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18))
         image.lockFocus()
-        NSColor.black.setFill()
+        NSColor.white.setFill()
         NSBezierPath(ovalIn: NSRect(x: 2.2, y: 9.8, width: 6.3, height: 6.3)).fill()
         NSBezierPath(ovalIn: NSRect(x: 9.3, y: 8.5, width: 6.5, height: 6.5)).fill()
         NSBezierPath(ovalIn: NSRect(x: 6.2, y: 2.5, width: 6.8, height: 6.8)).fill()
         image.unlockFocus()
-        image.isTemplate = true
+        image.isTemplate = false
         return image
     }
 
