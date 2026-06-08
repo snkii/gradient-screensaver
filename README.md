@@ -1,6 +1,6 @@
 # Gradient Screensaver
 
-**[English](#gradient-screensaver) · [한국어](#한국어-1)**
+**[English](#gradient-screensaver) · [한국어](#한국어)**
 
 **Animated mesh gradient for your desktop — Windows screensaver & macOS wallpaper.**
 
@@ -122,7 +122,7 @@ MIT
 
 # 한국어
 
-**[English](#gradient-screensaver) · [한국어](#한국어-1)**
+**[English](#gradient-screensaver) · [한국어](#한국어)**
 
 **데스크탑을 위한 움직이는 메시 그래디언트 — Windows 화면보호기 & macOS 배경화면.**
 
