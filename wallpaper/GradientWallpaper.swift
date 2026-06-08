@@ -1158,10 +1158,27 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Menu bar
 
+    func makeStatusIcon() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18))
+        image.lockFocus()
+        NSColor.black.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 2.2, y: 9.8, width: 6.3, height: 6.3)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 9.3, y: 8.5, width: 6.5, height: 6.5)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 6.2, y: 2.5, width: 6.8, height: 6.8)).fill()
+        image.unlockFocus()
+        image.isTemplate = true
+        return image
+    }
+
     func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: "Gradient Wallpaper")
+            button.image = makeStatusIcon()
+            button.imagePosition = .imageOnly
+            button.title = ""
+            button.alignment = .center
+            button.toolTip = "Gradient Wallpaper"
+            button.setAccessibilityLabel("Gradient Wallpaper")
         }
         let menu = NSMenu()
         let header = NSMenuItem(title: "Gradient Wallpaper", action: nil, keyEquivalent: "")

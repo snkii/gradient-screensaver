@@ -38,7 +38,7 @@ Soft organic color blobs are generated as still scenes on a dark background. Ins
 **[Download GradientWallpaper-macOS.zip](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientWallpaper-macOS.zip)**
 
 1. Unzip and open `GradientWallpaper.app`
-2. A sparkles icon appears in the menu bar
+2. A small blob icon appears in the menu bar
 3. First launch: macOS may block it, so right-click and choose Open
 
 To auto-start at login: **System Settings -> General -> Login Items -> + -> GradientWallpaper**
@@ -127,7 +127,7 @@ MIT. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 **[GradientWallpaper-macOS.zip 다운로드](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientWallpaper-macOS.zip)**
 
 1. 압축 해제 후 `GradientWallpaper.app` 실행
-2. 메뉴바에 sparkles 아이콘이 나타남
+2. 메뉴바에 작은 blob 아이콘이 나타남
 3. 첫 실행 시 macOS가 차단하면 우클릭 후 열기 선택
 
 로그인 시 자동 실행: **시스템 설정 -> 일반 -> 로그인 항목 -> + -> GradientWallpaper**
