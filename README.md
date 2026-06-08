@@ -28,7 +28,7 @@ Soft organic color blobs are generated as still scenes on a dark background. Ins
 - **Favorite scenes** you can save and restore later
 - **Static lock screen background** synced from the same desktop scene
 - **Shared multi-display scene** so every connected display uses the same generated scene
-- **Vintage film grain texture** with subtle fine/coarse grain and warm tone overlay
+- **Lifted color rendering** with subtle fine/coarse grain and warm tone overlay
 - Zero dependencies beyond the macOS SDK
 
 ---
@@ -117,7 +117,7 @@ MIT. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 - **마음에 드는 scene 저장** 및 나중에 복원 가능
 - **잠금화면 정적 배경**을 데스크톱과 같은 scene으로 동기화
 - **멀티 디스플레이 공유 scene**으로 모든 디스플레이가 같은 생성 scene 사용
-- **빈티지 필름 그레인 질감**으로 subtle fine/coarse grain과 따뜻한 tone overlay 적용
+- **살짝 올린 컬러 렌더링**에 subtle fine/coarse grain과 따뜻한 tone overlay 적용
 - macOS SDK 외 별도 의존성 없음
 
 ---

@@ -59,6 +59,7 @@ make install-login  # 로그인 시 자동 실행 등록
 - blob은 CSS blur 기반 홈페이지 구현을 네이티브 radial mesh로 근사
 - blob 크기: 화면 단변의 약 77~97%, blur는 단변의 22%
 - 모든 렌더는 홈페이지와 맞춘 film grain/tone pass를 마지막에 적용
+- blob 렌더링 색상은 팔레트 정체성을 유지하면서 saturation/brightness를 살짝 lift
 - macOS grain은 큰 비정형 tile과 낮은 alpha로 subtle하게 적용
 
 ---

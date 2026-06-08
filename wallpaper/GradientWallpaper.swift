@@ -76,6 +76,9 @@ private let fineFilmGrainTileSize: CGFloat = 731
 private let coarseFilmGrainTileSize: CGFloat = 1543
 private let fineFilmGrainImage = makeFilmGrainImage(size: Int(fineFilmGrainTileSize), seed: 0x5E0A, contrast: 46)
 private let coarseFilmGrainImage = makeFilmGrainImage(size: Int(coarseFilmGrainTileSize), seed: 0xC0A4, contrast: 26)
+private let meshColorSaturationLift: CGFloat = 1.16
+private let meshColorBrightnessLift: CGFloat = 1.08
+private let meshColorLiftOffset: CGFloat = 0.015
 
 private func nextFilmGrainSeed(_ seed: inout UInt32) -> UInt32 {
     seed ^= seed << 13
@@ -525,11 +528,12 @@ private func drawStaticBlob(ctx: CGContext, cx: CGFloat, cy: CGFloat, size: CGFl
                             blur: CGFloat, sx: CGFloat, sy: CGFloat, rot: CGFloat,
                             color: MeshRGB) {
     let radius = size / 2 + blur * 2
+    let renderColor = liftedMeshColor(color)
     let colors = [
-        CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.70),
-        CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.52),
-        CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.18),
-        CGColor(red: color.r, green: color.g, blue: color.b, alpha: 0.0),
+        CGColor(red: renderColor.r, green: renderColor.g, blue: renderColor.b, alpha: 0.76),
+        CGColor(red: renderColor.r, green: renderColor.g, blue: renderColor.b, alpha: 0.56),
+        CGColor(red: renderColor.r, green: renderColor.g, blue: renderColor.b, alpha: 0.21),
+        CGColor(red: renderColor.r, green: renderColor.g, blue: renderColor.b, alpha: 0.0),
     ] as CFArray
     let locations: [CGFloat] = [0, 0.34, 0.72, 1]
     guard let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
@@ -547,6 +551,19 @@ private func drawStaticBlob(ctx: CGContext, cx: CGFloat, cy: CGFloat, size: CGFl
                            endRadius: radius,
                            options: [.drawsAfterEndLocation])
     ctx.restoreGState()
+}
+
+private func liftedMeshColor(_ color: MeshRGB) -> MeshRGB {
+    let luma = color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722
+    return MeshRGB(
+        r: clamp01((luma + (color.r - luma) * meshColorSaturationLift) * meshColorBrightnessLift + meshColorLiftOffset),
+        g: clamp01((luma + (color.g - luma) * meshColorSaturationLift) * meshColorBrightnessLift + meshColorLiftOffset),
+        b: clamp01((luma + (color.b - luma) * meshColorSaturationLift) * meshColorBrightnessLift + meshColorLiftOffset)
+    )
+}
+
+private func clamp01(_ value: CGFloat) -> CGFloat {
+    min(max(value, 0), 1)
 }
 
 class WallpaperDelegate: NSObject, NSApplicationDelegate {
