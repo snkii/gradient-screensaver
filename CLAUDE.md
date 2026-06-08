@@ -11,11 +11,14 @@ Gruvbox 팔레트 기반의 mesh gradient 애니메이션 화면보호기.
 
 ```
 gradient-screensaver/
-├── Program.cs                      # Windows (.scr) — C# / .NET 8 / WinForms
+├── Program.cs                       # Windows (.scr) — C# / .NET 8 / WinForms
 ├── GradientScreenSaver.csproj
 ├── macos/
-│   ├── GradientScreenSaver.swift   # macOS (.saver) — Swift / ScreenSaverView
+│   ├── GradientScreenSaver.swift    # macOS 화면보호기 (.saver) — Swift / ScreenSaverView
 │   ├── Info.plist
+│   └── Makefile
+├── wallpaper/
+│   ├── GradientWallpaper.swift      # macOS 배경화면 — WKWebView @ desktop window level
 │   └── Makefile
 └── CLAUDE.md
 ```
@@ -42,6 +45,17 @@ dotnet publish -c Release
 cd macos
 make install
 # System Settings → Screen Saver → GradientScreenSaver
+```
+
+---
+
+## macOS 배경화면 빌드 & 실행
+
+```bash
+cd wallpaper
+make run          # 빌드 후 백그라운드 실행 (배경화면 즉시 적용)
+make stop         # 종료
+make install-login  # 로그인 시 자동 실행 등록
 ```
 
 ---
