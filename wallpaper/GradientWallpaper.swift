@@ -40,8 +40,11 @@ function randomize(){
 randomize();
 setInterval(randomize, 6000);
 
-let _last=0;
+let _last=0, _paused=false;
+window.pauseAnimation  = () => { _paused = true; };
+window.resumeAnimation = () => { if (_paused) { _paused = false; requestAnimationFrame(draw); } };
 function draw(ts){
+  if (_paused) return;
   requestAnimationFrame(draw);
   if(ts-_last < 50) return; // cap at 20fps
   _last=ts;
@@ -68,6 +71,31 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ n: Notification) {
         NSScreen.screens.forEach { windows.append(makeWindow($0)) }
         setupMenuBar()
+        setupSleepObservers()
+    }
+
+    func setupSleepObservers() {
+        let ws = NSWorkspace.shared.notificationCenter
+        ws.addObserver(self, selector: #selector(pause),
+                       name: NSWorkspace.screensDidSleepNotification, object: nil)
+        ws.addObserver(self, selector: #selector(pause),
+                       name: NSWorkspace.sessionDidResignActiveNotification, object: nil)
+        ws.addObserver(self, selector: #selector(resume),
+                       name: NSWorkspace.screensDidWakeNotification, object: nil)
+        ws.addObserver(self, selector: #selector(resume),
+                       name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
+    }
+
+    @objc func pause() {
+        webViews().forEach { $0.evaluateJavaScript("window.pauseAnimation()") { _,_ in } }
+    }
+
+    @objc func resume() {
+        webViews().forEach { $0.evaluateJavaScript("window.resumeAnimation()") { _,_ in } }
+    }
+
+    func webViews() -> [WKWebView] {
+        windows.compactMap { $0.contentView as? WKWebView }
     }
 
     func setupMenuBar() {
