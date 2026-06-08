@@ -112,7 +112,7 @@ make install-login  # also auto-start at login
 ```
 </details>
 
-A ✦ icon in the menu bar lets you switch between low-power random still modes that refresh every 1/3/5/10 minutes, or pause automatic refreshes. The default is Random Still - 10 Minutes. The lock screen wallpaper is refreshed from the same scene shown on the desktop. You can also generate a new random scene or quit from the menu. No Dock icon.
+A ✦ icon in the menu bar lets you switch between low-power random still modes that refresh every 1/3/5/10 minutes, pause automatic refreshes, save favorite scenes, or load saved scenes. The default is Random Still - 10 Minutes. Loading a saved scene switches to Paused so it stays put. The lock screen wallpaper is refreshed from the same scene shown on the desktop. You can also generate a new random scene or quit from the menu. No Dock icon.
 
 ---
 
@@ -260,7 +260,7 @@ make install-login  # 로그인 항목에도 자동 등록
 ```
 </details>
 
-메뉴바의 ✦ 아이콘에서 1/3/5/10분 간격 저전력 랜덤 정지 화면 모드나 자동 갱신 일시정지로 전환할 수 있습니다. 기본값은 Random Still - 10 Minutes입니다. 잠금화면 배경은 데스크톱에 보이는 같은 장면으로 갱신됩니다. 즉시 새 랜덤 장면을 만들거나 종료할 수도 있고, Dock 아이콘은 없습니다.
+메뉴바의 ✦ 아이콘에서 1/3/5/10분 간격 저전력 랜덤 정지 화면 모드, 자동 갱신 일시정지, 마음에 드는 scene 저장, 저장한 scene 불러오기를 할 수 있습니다. 기본값은 Random Still - 10 Minutes입니다. 저장한 scene을 불러오면 그대로 유지되도록 Paused로 전환됩니다. 잠금화면 배경은 데스크톱에 보이는 같은 장면으로 갱신됩니다. 즉시 새 랜덤 장면을 만들거나 종료할 수도 있고, Dock 아이콘은 없습니다.
 
 ---
 

@@ -42,13 +42,21 @@ private let wallpaperModeDefaultsKey = "WallpaperMode"
 private let defaultWallpaperMode: WallpaperMode = .randomEvery10Minutes
 private let sceneStateDirectoryName = "Seonuk Gradient"
 private let sceneStateFileName = "current_scene.json"
+private let savedScenesFileName = "saved_scenes.json"
+private let maxSavedScenes = 24
+
+private func sceneStateDirectoryURL() -> URL? {
+    FileManager.default.urls(for: .applicationSupportDirectory,
+                             in: .userDomainMask).first?
+        .appendingPathComponent(sceneStateDirectoryName, isDirectory: true)
+}
 
 private func currentSceneStateURL() -> URL? {
-    guard let directory = FileManager.default.urls(for: .applicationSupportDirectory,
-                                                   in: .userDomainMask).first?
-        .appendingPathComponent(sceneStateDirectoryName, isDirectory: true)
-    else { return nil }
-    return directory.appendingPathComponent(sceneStateFileName)
+    sceneStateDirectoryURL()?.appendingPathComponent(sceneStateFileName)
+}
+
+private func savedScenesStateURL() -> URL? {
+    sceneStateDirectoryURL()?.appendingPathComponent(savedScenesFileName)
 }
 
 private let meshPalette: [MeshRGB] = [
@@ -285,6 +293,16 @@ final class GradientWallpaperView: NSView {
         ]
     }
 
+    func applySceneState(_ state: [String: Any]) -> Bool {
+        guard let blobStates = state["blobs"] as? [[String: Any]] else { return false }
+        let loadedBlobs = blobStates.compactMap { blob(from: $0) }
+        guard loadedBlobs.count >= 3 else { return false }
+
+        blobs = Array(loadedBlobs.prefix(3))
+        needsDisplay = true
+        return true
+    }
+
     private func blobState(_ blob: MeshBlob) -> [String: Any] {
         [
             "x": Double(blob.x),
@@ -309,6 +327,58 @@ final class GradientWallpaperView: NSView {
             "g": Double(color.g),
             "b": Double(color.b)
         ]
+    }
+
+    private func blob(from state: [String: Any]) -> MeshBlob? {
+        guard let x = cgFloatValue(state["x"]),
+              let y = cgFloatValue(state["y"]),
+              let vx = cgFloatValue(state["vx"]),
+              let vy = cgFloatValue(state["vy"]),
+              let vr = cgFloatValue(state["vr"]),
+              let radius = cgFloatValue(state["radius"]),
+              let sx = cgFloatValue(state["sx"]),
+              let sy = cgFloatValue(state["sy"]),
+              let rot = cgFloatValue(state["rot"]),
+              let colorElapsed = cgFloatValue(state["colorElapsed"]),
+              let current = color(from: state["current"]),
+              let start = color(from: state["start"]),
+              let target = color(from: state["target"])
+        else { return nil }
+
+        return MeshBlob(x: x,
+                        y: y,
+                        vx: vx,
+                        vy: vy,
+                        vr: vr,
+                        radius: radius,
+                        sx: sx,
+                        sy: sy,
+                        rot: rot,
+                        colorElapsed: colorElapsed,
+                        current: current,
+                        start: start,
+                        target: target)
+    }
+
+    private func color(from value: Any?) -> MeshRGB? {
+        guard let state = value as? [String: Any],
+              let r = cgFloatValue(state["r"]),
+              let g = cgFloatValue(state["g"]),
+              let b = cgFloatValue(state["b"])
+        else { return nil }
+        return MeshRGB(r: r, g: g, b: b)
+    }
+
+    private func doubleValue(_ value: Any?) -> Double? {
+        if let number = value as? NSNumber {
+            return number.doubleValue
+        }
+        return value as? Double
+    }
+
+    private func cgFloatValue(_ value: Any?) -> CGFloat? {
+        guard let double = doubleValue(value) else { return nil }
+        return CGFloat(double)
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -400,6 +470,7 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var headerItem: NSMenuItem?
     var modeItems: [WallpaperMode: NSMenuItem] = [:]
+    var savedScenesMenu: NSMenu?
     var originalWallpapers: [NSScreen: URL] = [:]
     var pausedForSystem = false
     var pausedForActivity = false
@@ -563,19 +634,24 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         randomSceneTimer = timer
     }
 
-    func saveCurrentSceneState() {
+    func currentScenePayload(updatedAt: Date = Date()) -> [String: Any]? {
         let scenes = NSScreen.screens.enumerated().compactMap { index, screen -> [String: Any]? in
             guard let view = gradientView(for: screen) else { return nil }
             return view.sceneState(for: screen, index: index)
         }
-        guard !scenes.isEmpty, let url = currentSceneStateURL() else { return }
+        guard !scenes.isEmpty else { return nil }
 
-        let payload: [String: Any] = [
+        return [
             "version": 1,
-            "updatedAt": Date().timeIntervalSince1970,
+            "updatedAt": updatedAt.timeIntervalSince1970,
             "mode": wallpaperMode.rawValue,
             "scenes": scenes
         ]
+    }
+
+    func saveCurrentSceneState() {
+        guard let payload = currentScenePayload(),
+              let url = currentSceneStateURL() else { return }
 
         do {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
@@ -594,6 +670,124 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         for (mode, item) in modeItems {
             item.state = mode == wallpaperMode ? .on : .off
         }
+        updateSavedScenesMenu()
+    }
+
+    // MARK: - Saved scenes
+
+    func loadSavedSceneRecords() -> [[String: Any]] {
+        guard let url = savedScenesStateURL(),
+              let data = try? Data(contentsOf: url),
+              let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let records = payload["savedScenes"] as? [[String: Any]]
+        else { return [] }
+
+        return records
+    }
+
+    func writeSavedSceneRecords(_ records: [[String: Any]]) {
+        guard let url = savedScenesStateURL() else { return }
+        let payload: [String: Any] = [
+            "version": 1,
+            "updatedAt": Date().timeIntervalSince1970,
+            "savedScenes": records
+        ]
+
+        do {
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                    withIntermediateDirectories: true)
+            let data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
+            try data.write(to: url, options: .atomic)
+        } catch {
+            return
+        }
+    }
+
+    func savedSceneName(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM d, HH:mm"
+        return "Scene \(formatter.string(from: date))"
+    }
+
+    func savedSceneTitle(_ record: [String: Any], fallbackIndex: Int) -> String {
+        if let name = record["name"] as? String, !name.isEmpty {
+            return name
+        }
+        return "Saved Scene \(fallbackIndex + 1)"
+    }
+
+    func applySavedSceneRecord(_ record: [String: Any]) {
+        guard let scenes = record["scenes"] as? [[String: Any]],
+              applySceneStates(scenes)
+        else { return }
+
+        applyMode(.paused, randomize: false)
+    }
+
+    func applySceneStates(_ sceneStates: [[String: Any]]) -> Bool {
+        var applied = false
+        for (index, screen) in NSScreen.screens.enumerated() {
+            guard let view = gradientView(for: screen),
+                  let scene = bestScene(from: sceneStates, for: screen, index: index)
+            else { continue }
+            applied = view.applySceneState(scene) || applied
+        }
+        return applied
+    }
+
+    func bestScene(from sceneStates: [[String: Any]], for screen: NSScreen, index: Int) -> [String: Any]? {
+        if let exact = sceneStates.first(where: { intValue($0["index"]) == index }) {
+            return exact
+        }
+
+        let targetAspect = screen.frame.height > 0 ? Double(screen.frame.width / screen.frame.height) : 1
+        return sceneStates.min { left, right in
+            let leftAspect = doubleValue(left["aspectRatio"]) ?? 1
+            let rightAspect = doubleValue(right["aspectRatio"]) ?? 1
+            return abs(leftAspect - targetAspect) < abs(rightAspect - targetAspect)
+        }
+    }
+
+    func doubleValue(_ value: Any?) -> Double? {
+        if let number = value as? NSNumber {
+            return number.doubleValue
+        }
+        return value as? Double
+    }
+
+    func intValue(_ value: Any?) -> Int? {
+        if let number = value as? NSNumber {
+            return number.intValue
+        }
+        return value as? Int
+    }
+
+    func updateSavedScenesMenu() {
+        guard let savedScenesMenu else { return }
+        savedScenesMenu.removeAllItems()
+
+        let records = loadSavedSceneRecords()
+        guard !records.isEmpty else {
+            let emptyItem = NSMenuItem(title: "No Saved Scenes", action: nil, keyEquivalent: "")
+            emptyItem.isEnabled = false
+            savedScenesMenu.addItem(emptyItem)
+            return
+        }
+
+        for (index, record) in records.enumerated() {
+            let item = NSMenuItem(title: savedSceneTitle(record, fallbackIndex: index),
+                                  action: #selector(loadSavedScene(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.representedObject = record["id"] as? String
+            savedScenesMenu.addItem(item)
+        }
+
+        savedScenesMenu.addItem(.separator())
+        let clearItem = NSMenuItem(title: "Clear Saved Scenes", action: #selector(clearSavedScenes), keyEquivalent: "")
+        clearItem.target = self
+        savedScenesMenu.addItem(clearItem)
     }
 
     // MARK: - Menu bar
@@ -626,6 +820,16 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         randomNow.target = self
         menu.addItem(randomNow)
 
+        let saveCurrent = NSMenuItem(title: "Save Current Scene", action: #selector(saveCurrentSceneMenuItem), keyEquivalent: "s")
+        saveCurrent.target = self
+        menu.addItem(saveCurrent)
+
+        let savedScenesRoot = NSMenuItem(title: "Saved Scenes", action: nil, keyEquivalent: "")
+        let savedScenesMenu = NSMenu()
+        savedScenesRoot.submenu = savedScenesMenu
+        self.savedScenesMenu = savedScenesMenu
+        menu.addItem(savedScenesRoot)
+
         let refreshLock = NSMenuItem(title: "Refresh Lock Screen Wallpaper", action: #selector(refreshLockScreenMenuItem), keyEquivalent: "")
         refreshLock.target = self
         menu.addItem(refreshLock)
@@ -643,6 +847,46 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
 
     @objc func generateRandomNow() {
         randomizeScenes(ignorePause: true)
+    }
+
+    @objc func saveCurrentSceneMenuItem() {
+        let now = Date()
+        guard var record = currentScenePayload(updatedAt: now) else { return }
+
+        var records = loadSavedSceneRecords()
+        record["id"] = UUID().uuidString
+        record["name"] = savedSceneName(for: now)
+        record["createdAt"] = now.timeIntervalSince1970
+        records.insert(record, at: 0)
+        if records.count > maxSavedScenes {
+            records = Array(records.prefix(maxSavedScenes))
+        }
+
+        writeSavedSceneRecords(records)
+        saveCurrentSceneState()
+        updateSavedScenesMenu()
+    }
+
+    @objc func loadSavedScene(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String,
+              let record = loadSavedSceneRecords().first(where: { $0["id"] as? String == id })
+        else { return }
+
+        applySavedSceneRecord(record)
+    }
+
+    @objc func clearSavedScenes() {
+        let alert = NSAlert()
+        alert.messageText = "Clear saved scenes?"
+        alert.informativeText = "This removes saved Seonuk Gradient scenes from this Mac."
+        alert.addButton(withTitle: "Clear")
+        alert.addButton(withTitle: "Cancel")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        if let url = savedScenesStateURL() {
+            try? FileManager.default.removeItem(at: url)
+        }
+        updateSavedScenesMenu()
     }
 
     @objc func refreshLockScreenMenuItem() {
