@@ -58,6 +58,7 @@ make install-login  # 로그인 시 자동 실행 등록
 - 각 blob은 실행/생성마다 시작 위치, 크기, 비율, 회전, 색상이 랜덤으로 결정됨
 - Windows 화면보호기와 Windows 배경화면은 애니메이션 없이 정적 scene만 렌더링
 - macOS 배경화면은 정적 mesh scene을 유지하고, 다른 앱 사용 중에는 랜덤 갱신 타이머를 멈춤
+- macOS 멀티 디스플레이는 하나의 shared scene을 모든 화면에 적용
 - macOS 배경화면 메뉴바 아이콘에서 Paused / Random Still 1·3·5·10분 모드 전환 가능
 - macOS 배경화면 메뉴바에서 현재 scene 저장 및 저장한 scene 불러오기 가능. 불러오면 장면 유지를 위해 Paused로 전환
 - 기본 모드는 Random Still 10분. 선택한 분 간격으로 새 랜덤 장면과 같은 장면의 잠금화면용 PNG만 재생성

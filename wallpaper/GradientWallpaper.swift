@@ -230,12 +230,8 @@ final class GradientWallpaperView: NSView {
         initBlobs()
     }
 
-    func setMode(_ newMode: WallpaperMode, randomize: Bool = false) {
-        let changed = mode != newMode
+    func setMode(_ newMode: WallpaperMode) {
         mode = newMode
-        if randomize || (changed && newMode.randomInterval != nil) {
-            randomizeScene()
-        }
         needsDisplay = true
     }
 
@@ -289,6 +285,12 @@ final class GradientWallpaperView: NSView {
             "height": height,
             "scale": Double(screen.backingScaleFactor),
             "aspectRatio": height > 0 ? width / height : 1,
+            "blobs": blobs.map { blobState($0) }
+        ]
+    }
+
+    func portableSceneState() -> [String: Any] {
+        [
             "blobs": blobs.map { blobState($0) }
         ]
     }
@@ -610,7 +612,12 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     func applyMode(_ mode: WallpaperMode, randomize: Bool = false) {
         wallpaperMode = mode
         UserDefaults.standard.set(mode.rawValue, forKey: wallpaperModeDefaultsKey)
-        gradientViews().forEach { $0.setMode(mode, randomize: randomize) }
+        gradientViews().forEach { $0.setMode(mode) }
+        if randomize {
+            randomizeSharedScene()
+        } else {
+            syncDisplaysToPrimaryScene()
+        }
         refreshLockScreenWallpaper()
         updateRandomSceneTimer()
         updateMenuState()
@@ -618,8 +625,28 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
 
     func randomizeScenes(ignorePause: Bool = false) {
         guard ignorePause || (!pausedForSystem && !pausedForActivity) else { return }
-        gradientViews().forEach { $0.randomizeScene() }
+        randomizeSharedScene()
         refreshLockScreenWallpaper()
+    }
+
+    func randomizeSharedScene() {
+        guard let primaryView = gradientViews().first else { return }
+        primaryView.randomizeScene()
+        applySceneStateToAllDisplays(primaryView.portableSceneState())
+    }
+
+    func syncDisplaysToPrimaryScene() {
+        guard let primaryState = gradientViews().first?.portableSceneState() else { return }
+        applySceneStateToAllDisplays(primaryState)
+    }
+
+    @discardableResult
+    func applySceneStateToAllDisplays(_ scene: [String: Any]) -> Bool {
+        var applied = false
+        for view in gradientViews() {
+            applied = view.applySceneState(scene) || applied
+        }
+        return applied
     }
 
     func updateRandomSceneTimer() {
@@ -726,14 +753,10 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applySceneStates(_ sceneStates: [[String: Any]]) -> Bool {
-        var applied = false
-        for (index, screen) in NSScreen.screens.enumerated() {
-            guard let view = gradientView(for: screen),
-                  let scene = bestScene(from: sceneStates, for: screen, index: index)
-            else { continue }
-            applied = view.applySceneState(scene) || applied
-        }
-        return applied
+        let referenceScreen = NSScreen.main ?? NSScreen.screens.first
+        let scene = referenceScreen.flatMap { bestScene(from: sceneStates, for: $0, index: 0) } ?? sceneStates.first
+        guard let scene else { return false }
+        return applySceneStateToAllDisplays(scene)
     }
 
     func bestScene(from sceneStates: [[String: Any]], for screen: NSScreen, index: Int) -> [String: Any]? {
@@ -912,7 +935,7 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         win.setFrame(screen.frame, display: true)
 
         let view = GradientWallpaperView(frame: CGRect(origin: .zero, size: screen.frame.size))
-        view.setMode(wallpaperMode, randomize: false)
+        view.setMode(wallpaperMode)
         view.autoresizingMask = [.width, .height]
         win.contentView = view
 

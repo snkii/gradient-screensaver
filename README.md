@@ -31,6 +31,7 @@ Soft organic color blobs are generated as still scenes on a dark background. Ins
 - **Vintage film grain texture** — subtle fine/coarse grain plus warm tone overlay to soften 4K banding
 - **Favorite scenes** on macOS — save a scene you like and load it later
 - **Static mesh lock screen background** on macOS by syncing a generated wallpaper image
+- **Shared multi-display scene** on macOS — every connected display uses the same generated scene
 - Zero dependencies beyond the platform SDK
 
 ---
@@ -162,6 +163,7 @@ MIT. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 - **빈티지 필름 그레인 질감** — 4K banding을 줄이기 위한 fine/coarse grain + 따뜻한 tone overlay
 - **macOS favorite scenes** — 마음에 드는 scene 저장 및 나중에 불러오기
 - **macOS 잠금화면 정적 mesh 배경** — 생성된 wallpaper 이미지를 시스템 배경으로 동기화
+- **macOS 멀티 디스플레이 공유 scene** — 연결된 모든 디스플레이가 같은 생성 scene 사용
 - 플랫폼 SDK 외 별도 의존성 없음
 
 ---
