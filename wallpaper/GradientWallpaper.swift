@@ -1,6 +1,7 @@
 import AppKit
 import WebKit
 import CoreGraphics
+import ImageIO
 
 let html = """
 <!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -46,7 +47,7 @@ window.resumeAnimation = () => { if (_paused) { _paused = false; requestAnimatio
 function draw(ts){
   if (_paused) return;
   requestAnimationFrame(draw);
-  if(ts-_last < 50) return; // cap at 20fps
+  if(ts-_last < 50) return;
   _last=ts;
   const w=window.innerWidth, h=window.innerHeight, m=Math.min(w,h);
   for(const b of blobs){
@@ -64,15 +65,57 @@ requestAnimationFrame(draw);
 </script></body></html>
 """
 
+// Creates a 2×2 solid #282828 PNG and returns its file URL
+func makeDarkWallpaperURL() -> URL? {
+    let img = NSImage(size: NSSize(width: 2, height: 2))
+    img.lockFocus()
+    NSColor(deviceRed: 40/255, green: 40/255, blue: 40/255, alpha: 1).setFill()
+    NSRect(x: 0, y: 0, width: 2, height: 2).fill()
+    img.unlockFocus()
+    guard let tiff = img.tiffRepresentation,
+          let rep  = NSBitmapImageRep(data: tiff),
+          let png  = rep.representation(using: .png, properties: [:]) else { return nil }
+    let url = URL(fileURLWithPath: NSTemporaryDirectory())
+              .appendingPathComponent("gradient_wallpaper_bg.png")
+    try? png.write(to: url)
+    return url
+}
+
 class WallpaperDelegate: NSObject, NSApplicationDelegate {
     var windows: [NSWindow] = []
     var statusItem: NSStatusItem?
+    var originalWallpapers: [NSScreen: URL] = [:]
 
     func applicationDidFinishLaunching(_ n: Notification) {
+        replaceSystemWallpaper()
         NSScreen.screens.forEach { windows.append(makeWindow($0)) }
         setupMenuBar()
         setupSleepObservers()
     }
+
+    func applicationWillTerminate(_ n: Notification) {
+        restoreSystemWallpaper()
+    }
+
+    // MARK: - System wallpaper replacement
+
+    func replaceSystemWallpaper() {
+        guard let darkURL = makeDarkWallpaperURL() else { return }
+        for screen in NSScreen.screens {
+            if let original = NSWorkspace.shared.desktopImageURL(for: screen) {
+                originalWallpapers[screen] = original
+            }
+            try? NSWorkspace.shared.setDesktopImageURL(darkURL, for: screen, options: [:])
+        }
+    }
+
+    func restoreSystemWallpaper() {
+        for (screen, url) in originalWallpapers {
+            try? NSWorkspace.shared.setDesktopImageURL(url, for: screen, options: [:])
+        }
+    }
+
+    // MARK: - Sleep / lock observers
 
     func setupSleepObservers() {
         let ws = NSWorkspace.shared.notificationCenter
@@ -98,6 +141,8 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         windows.compactMap { $0.contentView as? WKWebView }
     }
 
+    // MARK: - Menu bar
+
     func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem?.button {
@@ -112,6 +157,8 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         statusItem?.menu = menu
     }
 
+    // MARK: - Window
+
     func makeWindow(_ screen: NSScreen) -> NSWindow {
         let win = NSWindow(
             contentRect: screen.frame,
@@ -125,6 +172,7 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         win.isOpaque = true
         win.hasShadow = false
         win.ignoresMouseEvents = true
+        win.backgroundColor = NSColor(deviceRed: 40/255, green: 40/255, blue: 40/255, alpha: 1)
         win.setFrame(screen.frame, display: true)
 
         let wv = WKWebView(frame: CGRect(origin: .zero, size: screen.frame.size))
