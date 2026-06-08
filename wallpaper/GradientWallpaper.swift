@@ -474,7 +474,7 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     var originalWallpapers: [NSScreen: URL] = [:]
     var pausedForSystem = false
     var pausedForActivity = false
-    var animationPaused = false
+    var refreshPaused = false
     var wallpaperMode: WallpaperMode = WallpaperMode(rawValue: UserDefaults.standard.string(forKey: wallpaperModeDefaultsKey) ?? "") ?? defaultWallpaperMode
     var randomSceneTimer: Timer?
     var generatedWallpaperURLs: [URL] = []
@@ -563,7 +563,7 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     @objc func pauseForSystem() {
         refreshLockScreenWallpaper()
         pausedForSystem = true
-        refreshAnimationState()
+        refreshTimerState()
     }
 
     @objc func resumeFromSystem() {
@@ -578,13 +578,13 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
     func updateActivityPause(force: Bool = false) {
         let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
         pausedForActivity = bundleID != nil && bundleID != "com.apple.finder"
-        refreshAnimationState(force: force)
+        refreshTimerState(force: force)
     }
 
-    func refreshAnimationState(force: Bool = false) {
+    func refreshTimerState(force: Bool = false) {
         let shouldPause = pausedForSystem || pausedForActivity
-        guard force || shouldPause != animationPaused else { return }
-        animationPaused = shouldPause
+        guard force || shouldPause != refreshPaused else { return }
+        refreshPaused = shouldPause
         updateRandomSceneTimer()
         saveCurrentSceneState()
     }

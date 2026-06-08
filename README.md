@@ -2,9 +2,9 @@
 
 **[English](#seonuk-gradient) · [한국어](#한국어)**
 
-**Animated mesh gradient for your desktop — Windows screensaver, Windows wallpaper & macOS wallpaper.**
+**Static mesh gradient for your desktop — Windows screensaver, Windows wallpaper & macOS wallpaper.**
 
-Soft organic color blobs drift across a dark background, slowly cycling through a handpicked palette. Inspired by the background on [seon.uk](https://seon.uk).
+Soft organic color blobs are generated as still scenes on a dark background. Inspired by the background on [seon.uk](https://seon.uk).
 
 ---
 
@@ -17,20 +17,19 @@ Soft organic color blobs drift across a dark background, slowly cycling through 
 | Platform | Format | Tech |
 |----------|--------|------|
 | 🪟 Windows | `.scr` screensaver | C# · .NET 8 · WinForms |
-| 🪟 Windows | Live wallpaper | C# · .NET 8 · WinForms · WorkerW |
+| 🪟 Windows | Static wallpaper | C# · .NET 8 · WinForms · WorkerW |
 | 🪟 Windows | Theme template | `.theme` |
-| 🍎 macOS | `.saver` screensaver | Swift · ScreenSaverView |
 | 🍎 macOS | Wallpaper | Swift · AppKit |
 
 ---
 
 ## Features
 
-- **3 organic color blobs** with randomized position, velocity, size, stretch, and rotation
-- **Auto-cycles** — palette shifts every 7 seconds with smooth 6.5 second transitions
+- **3 organic color blobs** with randomized position, size, stretch, rotation, and color
+- **Static scenes** — generated once on start, manually, or by a low-power timer where supported
 - **Gruvbox-inspired palette** — 10 handpicked accent colors
 - **Vintage film grain texture** — subtle fine/coarse grain plus warm tone overlay to soften 4K banding
-- **Auto-pauses on sleep / lock screen** (macOS wallpaper)
+- **Favorite scenes** on macOS — save a scene you like and load it later
 - **Static mesh lock screen background** on macOS by syncing a generated wallpaper image
 - Zero dependencies beyond the platform SDK
 
@@ -59,7 +58,7 @@ Optional: after copying the `.scr`, double-click `windows-theme\SeonukGradient.t
 
 ---
 
-### 🪟 Windows — Live Wallpaper
+### 🪟 Windows — Static Wallpaper
 
 **[⬇ Download GradientWallpaper-Windows-x64.zip](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientWallpaper-Windows-x64.zip)**
 
@@ -69,25 +68,9 @@ cd seonuk-gradient\wallpaper-win
 dotnet publish -c Release
 ```
 
-Run `bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`. A tray icon lets you quit.
+Run `bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`. A tray icon lets you generate a new still scene or quit.
 
-The Windows theme template can select the screensaver and colors, but the live wallpaper app still runs separately.
-
----
-
-### 🍎 macOS — Screensaver
-
-**[⬇ Download GradientScreenSaver-macOS.zip](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientScreenSaver-macOS.zip)**
-
-```bash
-git clone https://github.com/snkii/seonuk-gradient
-cd seonuk-gradient/macos
-make install
-```
-
-Open **System Settings → Screen Saver** and select **GradientScreenSaver**.
-
-When the macOS wallpaper app has run, the screensaver starts from the latest saved desktop scene.
+The Windows theme template can select the screensaver and colors, but the static wallpaper app still runs separately.
 
 ---
 
@@ -118,7 +101,7 @@ A ✦ icon in the menu bar lets you switch between low-power random still modes 
 
 ## Color Palette
 
-The gradient cycles through 10 Gruvbox accent colors:
+The gradient uses 10 Gruvbox accent colors:
 
 <table>
 <tr>
@@ -137,9 +120,9 @@ The gradient cycles through 10 Gruvbox accent colors:
 
 ---
 
-## Live Demo
+## Website
 
-The same autonomous mesh animation runs as the background of **[seon.uk](https://seon.uk)**.
+The same visual language appears in the background of **[seon.uk](https://seon.uk)**.
 
 ---
 
@@ -154,9 +137,9 @@ MIT. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 
 **[English](#seonuk-gradient) · [한국어](#한국어)**
 
-**데스크탑을 위한 움직이는 메시 그래디언트 — Windows 화면보호기, Windows 배경화면 & macOS 배경화면.**
+**데스크탑을 위한 정적 메시 그래디언트 — Windows 화면보호기, Windows 배경화면 & macOS 배경화면.**
 
-부드러운 유기적 색상 블롭이 어두운 배경 위를 천천히 떠다니며 Gruvbox 팔레트를 순환합니다. [seon.uk](https://seon.uk) 배경화면에서 영감을 받았습니다.
+부드러운 유기적 색상 블롭을 어두운 배경 위의 정적 scene으로 생성합니다. [seon.uk](https://seon.uk) 배경화면에서 영감을 받았습니다.
 
 ---
 
@@ -165,20 +148,19 @@ MIT. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 | 플랫폼 | 형식 | 기술 |
 |--------|------|------|
 | 🪟 Windows | `.scr` 화면보호기 | C# · .NET 8 · WinForms |
-| 🪟 Windows | 라이브 배경화면 | C# · .NET 8 · WinForms · WorkerW |
+| 🪟 Windows | 정적 배경화면 | C# · .NET 8 · WinForms · WorkerW |
 | 🪟 Windows | 테마 템플릿 | `.theme` |
-| 🍎 macOS | `.saver` 화면보호기 | Swift · ScreenSaverView |
 | 🍎 macOS | 배경화면 | Swift · AppKit |
 
 ---
 
 ## 특징
 
-- **3개의 유기적 색상 블롭**이 위치, 속도, 크기, 비율, 회전을 랜덤으로 갖고 떠다님
-- **자동 색상 순환** — 7초마다 팔레트 변경, 6.5초 동안 부드럽게 전환
+- **3개의 유기적 색상 블롭**이 위치, 크기, 비율, 회전, 색상을 랜덤으로 가짐
+- **정적 scene** — 시작 시, 수동 생성 시, 또는 지원되는 저전력 타이머로 생성
 - **Gruvbox 팔레트** — 10가지 엑센트 컬러
 - **빈티지 필름 그레인 질감** — 4K banding을 줄이기 위한 fine/coarse grain + 따뜻한 tone overlay
-- **절전 모드/잠금화면 자동 일시정지** (macOS 배경화면)
+- **macOS favorite scenes** — 마음에 드는 scene 저장 및 나중에 불러오기
 - **macOS 잠금화면 정적 mesh 배경** — 생성된 wallpaper 이미지를 시스템 배경으로 동기화
 - 플랫폼 SDK 외 별도 의존성 없음
 
@@ -207,7 +189,7 @@ dotnet publish -c Release
 
 ---
 
-### 🪟 Windows — 라이브 배경화면
+### 🪟 Windows — 정적 배경화면
 
 **[⬇ GradientWallpaper-Windows-x64.zip 다운로드](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientWallpaper-Windows-x64.zip)**
 
@@ -217,25 +199,9 @@ cd seonuk-gradient\wallpaper-win
 dotnet publish -c Release
 ```
 
-`bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`를 실행하세요. 트레이 아이콘에서 종료할 수 있습니다.
+`bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`를 실행하세요. 트레이 아이콘에서 새 정적 scene을 만들거나 종료할 수 있습니다.
 
-Windows 테마 템플릿은 화면보호기와 색상 설정을 지정할 수 있지만, 라이브 배경화면 앱은 별도로 실행됩니다.
-
----
-
-### 🍎 macOS — 화면보호기
-
-**[⬇ GradientScreenSaver-macOS.zip 다운로드](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientScreenSaver-macOS.zip)**
-
-```bash
-git clone https://github.com/snkii/seonuk-gradient
-cd seonuk-gradient/macos
-make install
-```
-
-**시스템 설정 → 화면 보호기**에서 **GradientScreenSaver** 선택.
-
-macOS 배경화면 앱이 실행된 적이 있으면, 화면보호기는 마지막으로 저장된 데스크톱 scene에서 시작합니다.
+Windows 테마 템플릿은 화면보호기와 색상 설정을 지정할 수 있지만, 정적 배경화면 앱은 별도로 실행됩니다.
 
 ---
 
@@ -285,9 +251,9 @@ Gruvbox 팔레트의 10가지 엑센트 컬러:
 
 ---
 
-## 라이브 데모
+## 웹사이트
 
-동일한 자율 mesh 애니메이션이 **[seon.uk](https://seon.uk)** 배경화면으로 실행 중입니다.
+같은 시각 언어가 **[seon.uk](https://seon.uk)** 배경에 쓰이고 있습니다.
 
 ---
 

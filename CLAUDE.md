@@ -2,7 +2,7 @@
 
 ## 프로젝트 목적
 
-Gruvbox 팔레트 기반의 mesh gradient 애니메이션 화면보호기.  
+Gruvbox 팔레트 기반의 정적 mesh gradient 배경화면/화면보호기.
 [seon.uk](https://seon.uk) 홈페이지의 canvas blob 배경과 동일한 느낌.
 
 ---
@@ -13,10 +13,6 @@ Gruvbox 팔레트 기반의 mesh gradient 애니메이션 화면보호기.
 seonuk-gradient/
 ├── Program.cs                       # Windows (.scr) — C# / .NET 8 / WinForms
 ├── GradientScreenSaver.csproj
-├── macos/
-│   ├── GradientScreenSaver.swift    # macOS 화면보호기 (.saver) — Swift / ScreenSaverView
-│   ├── Info.plist
-│   └── Makefile
 ├── wallpaper/
 │   ├── GradientWallpaper.swift      # macOS 배경화면 — native NSView @ desktop window level
 │   └── Makefile
@@ -45,16 +41,6 @@ dotnet publish -c Release
 
 ---
 
-## macOS 빌드 & 설치
-
-```bash
-cd macos
-make install
-# System Settings → Screen Saver → GradientScreenSaver
-```
-
----
-
 ## macOS 배경화면 빌드 & 실행
 
 ```bash
@@ -68,15 +54,15 @@ make install-login  # 로그인 시 자동 실행 등록
 
 ## 동작 방식
 
-- 3개의 컬러 blob이 화면 위를 천천히 떠다님
-- 각 blob은 실행마다 시작 위치, 속도, 크기, 비율, 회전이 랜덤으로 결정됨
-- 7초마다 각 blob의 목표 색상이 랜덤으로 변경, 6.5초 동안 부드럽게 전환
-- macOS 배경화면은 라이브 애니메이션 없이 정적 mesh scene을 유지하고, 다른 앱 사용 중에는 랜덤 갱신 타이머를 멈춤
+- 3개의 컬러 blob이 정적 scene으로 생성됨
+- 각 blob은 실행/생성마다 시작 위치, 크기, 비율, 회전, 색상이 랜덤으로 결정됨
+- Windows 화면보호기와 Windows 배경화면은 애니메이션 없이 정적 scene만 렌더링
+- macOS 배경화면은 정적 mesh scene을 유지하고, 다른 앱 사용 중에는 랜덤 갱신 타이머를 멈춤
 - macOS 배경화면 메뉴바 아이콘에서 Paused / Random Still 1·3·5·10분 모드 전환 가능
 - macOS 배경화면 메뉴바에서 현재 scene 저장 및 저장한 scene 불러오기 가능. 불러오면 장면 유지를 위해 Paused로 전환
 - 기본 모드는 Random Still 10분. 선택한 분 간격으로 새 랜덤 장면과 같은 장면의 잠금화면용 PNG만 재생성
 - 메뉴바 헤더/체크 표시와 잠금화면 PNG는 현재 선택 모드 및 현재 desktop scene과 동기화
-- macOS 배경화면 앱은 최신 scene을 `~/Library/Application Support/Seonuk Gradient/current_scene.json`에 저장하고, macOS 화면보호기는 시작 시 이 scene에서 출발
+- macOS 배경화면 앱은 최신 scene을 `~/Library/Application Support/Seonuk Gradient/current_scene.json`에 저장
 - 마우스 움직임 / 클릭 / 키 입력 시 종료
 - Windows: 멀티 모니터 지원
 
@@ -90,7 +76,7 @@ make install-login  # 로그인 시 자동 실행 등록
 - blob 크기: 화면 단변의 약 77~97%, blur는 단변의 22%
 - 모든 렌더러는 홈페이지와 맞춘 film grain/tone pass를 마지막에 적용
 - Windows GDI+ 렌더러와 macOS 렌더러는 같은 fine/coarse grain theme 값을 사용
-- `windows-theme/SeonukGradient.theme`는 Windows Personalization에서 화면보호기/색상 테마를 지정하는 템플릿이며, WorkerW live wallpaper 앱은 별도 실행
+- `windows-theme/SeonukGradient.theme`는 Windows Personalization에서 화면보호기/색상 테마를 지정하는 템플릿이며, WorkerW static wallpaper 앱은 별도 실행
 
 ---
 
@@ -108,4 +94,4 @@ make install-login  # 로그인 시 자동 실행 등록
 - 불필요한 주석 달지 말 것
 - 커밋 메시지에 `Co-Authored-By: Claude` 서명 넣지 말 것
 - Windows: 단일 `Program.cs` 유지 선호
-- macOS: 단일 `GradientScreenSaver.swift` 유지 선호
+- macOS: `wallpaper/GradientWallpaper.swift` 단일 앱 유지 선호

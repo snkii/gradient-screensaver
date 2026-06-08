@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -21,7 +20,7 @@ static class Program
         if (mode == "c")
         {
             MessageBox.Show(
-                "Gradient Screensaver\n\nColors cycle automatically every 7 seconds.\nMove mouse or click to exit.",
+                "Gradient Screensaver\n\nA static gradient scene is generated each time it starts.\nMove mouse or click to exit.",
                 "Gradient Screensaver", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         else if (mode.StartsWith("p"))
@@ -55,7 +54,6 @@ class ScreenSaverForm : Form
 
     const float BlobSizeFactor = .90f;
     const float BlurFactor = .22f;
-    const float ColorTransitionSeconds = 6.5f;
     const int FineGrainTileSize = 731;
     const int CoarseGrainTileSize = 1543;
     const int FineGrainAlpha = 12;
@@ -69,22 +67,18 @@ class ScreenSaverForm : Form
 
     struct Blob
     {
-        public float X, Y, Vx, Vy, Vr, R, Sx, Sy, Rot, ColorElapsed;
-        public Color Current, Start, Target;
+        public float X, Y, R, Sx, Sy, Rot;
+        public Color Current;
     }
 
     readonly Blob[]  _blobs     = new Blob[3];
     readonly Random  _rng       = new Random();
-    readonly Timer   _animTimer = new Timer();
-    readonly Timer   _colorTimer = new Timer();
-    readonly Stopwatch _clock = Stopwatch.StartNew();
     Bitmap?   _buf;
     Bitmap?   _fineGrainTile;
     Bitmap?   _coarseGrainTile;
     TextureBrush? _fineGrainBrush;
     TextureBrush? _coarseGrainBrush;
     Graphics? _g;
-    double     _lastTickSeconds;
     Point     _lastMouse;
     bool      _firstMove = true;
 
@@ -98,16 +92,6 @@ class ScreenSaverForm : Form
         Cursor.Hide();
 
         InitBlobs();
-
-        _lastTickSeconds = _clock.Elapsed.TotalSeconds;
-
-        _animTimer.Interval = 66;           // homepage mesh cadence
-        _animTimer.Tick    += OnTick;
-        _animTimer.Start();
-
-        _colorTimer.Interval = 7000;        // new colors every 7 s
-        _colorTimer.Tick    += (_, _) => RandomizeTargets();
-        _colorTimer.Start();
     }
 
     void InitBlobs()
@@ -115,80 +99,22 @@ class ScreenSaverForm : Form
         for (int i = 0; i < 3; i++)
         {
             var color = RandomColor();
-            var velocity = RandomVelocity();
             _blobs[i] = new Blob
             {
                 X = NextFloat(-.12f, 1.12f),
                 Y = NextFloat(-.10f, 1.10f),
-                Vx = velocity.vx,
-                Vy = velocity.vy,
-                Vr = NextFloat(-.8f, .8f),
                 R = NextFloat(.86f, 1.08f),
                 Sx = NextFloat(.85f, 1.38f),
                 Sy = NextFloat(.78f, 1.28f),
                 Rot = NextFloat(0f, 360f),
                 Current = color,
-                Start = color,
-                Target = color,
-                ColorElapsed = ColorTransitionSeconds,
             };
-        }
-    }
-
-    void RandomizeTargets()
-    {
-        for (int i = 0; i < _blobs.Length; i++)
-        {
-            _blobs[i].Start = _blobs[i].Current;
-            _blobs[i].Target = RandomColor();
-            _blobs[i].ColorElapsed = 0f;
         }
     }
 
     Color RandomColor() => Palette[_rng.Next(Palette.Length)];
 
     float NextFloat(float min, float max) => min + (float)_rng.NextDouble() * (max - min);
-
-    (float vx, float vy) RandomVelocity()
-    {
-        float angle = NextFloat(0f, MathF.PI * 2f);
-        float speed = NextFloat(.0026f, .0054f);
-        return (MathF.Cos(angle) * speed, MathF.Sin(angle) * speed);
-    }
-
-    static float EaseInOut(float t)
-    {
-        t = Math.Clamp(t, 0f, 1f);
-        return t * t * (3f - 2f * t);
-    }
-
-    static Color Lerp(Color a, Color b, float t) => Color.FromArgb(
-        (int)(a.A + (b.A - a.A) * t),
-        (int)(a.R + (b.R - a.R) * t),
-        (int)(a.G + (b.G - a.G) * t),
-        (int)(a.B + (b.B - a.B) * t));
-
-    void OnTick(object? sender, EventArgs e)
-    {
-        double now = _clock.Elapsed.TotalSeconds;
-        float dt = (float)Math.Min(now - _lastTickSeconds, .25);
-        _lastTickSeconds = now;
-
-        for (int i = 0; i < _blobs.Length; i++)
-        {
-            ref var b = ref _blobs[i];
-            b.X += b.Vx * dt; b.Y += b.Vy * dt;
-            b.Rot += b.Vr * dt;
-            if (b.X < -.2f || b.X > 1.2f) b.Vx = -b.Vx;
-            if (b.Y < -.2f || b.Y > 1.2f) b.Vy = -b.Vy;
-            if (b.ColorElapsed < ColorTransitionSeconds)
-            {
-                b.ColorElapsed += dt;
-                b.Current = Lerp(b.Start, b.Target, EaseInOut(b.ColorElapsed / ColorTransitionSeconds));
-            }
-        }
-        Invalidate();
-    }
 
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -347,7 +273,6 @@ class ScreenSaverForm : Form
 
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
-        _animTimer.Dispose(); _colorTimer.Dispose();
         _fineGrainBrush?.Dispose(); _fineGrainTile?.Dispose();
         _coarseGrainBrush?.Dispose(); _coarseGrainTile?.Dispose();
         _buf?.Dispose(); _g?.Dispose();
