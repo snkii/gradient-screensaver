@@ -1176,11 +1176,11 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
             context.beginPath()
             context.move(to: CGPoint(x: 2.1, y: 9.0))
             context.addCurve(to: CGPoint(x: 9.0, y: 9.0),
-                             control1: CGPoint(x: 3.35, y: 12.95),
-                             control2: CGPoint(x: 7.45, y: 12.95))
+                             control1: CGPoint(x: 3.35, y: 5.05),
+                             control2: CGPoint(x: 7.45, y: 5.05))
             context.addCurve(to: CGPoint(x: 15.9, y: 9.0),
-                             control1: CGPoint(x: 10.55, y: 5.05),
-                             control2: CGPoint(x: 14.65, y: 5.05))
+                             control1: CGPoint(x: 10.55, y: 12.95),
+                             control2: CGPoint(x: 14.65, y: 12.95))
             context.strokePath()
         }
         image.unlockFocus()
