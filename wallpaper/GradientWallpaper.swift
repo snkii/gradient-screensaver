@@ -40,7 +40,11 @@ function randomize(){
 randomize();
 setInterval(randomize, 6000);
 
-function draw(){
+let _last=0;
+function draw(ts){
+  requestAnimationFrame(draw);
+  if(ts-_last < 50) return; // cap at 20fps
+  _last=ts;
   const w=window.innerWidth, h=window.innerHeight, m=Math.min(w,h);
   for(const b of blobs){
     b.c=lerp(b.c,b.t,.025);
@@ -52,9 +56,8 @@ function draw(){
     b.el.style.background = `rgb(${r_},${g_},${bl_})`;
     b.el.style.transform = `translate(${b.x*w - size/2}px, ${b.y*h - size/2}px)`;
   }
-  requestAnimationFrame(draw);
 }
-draw();
+requestAnimationFrame(draw);
 </script></body></html>
 """
 
