@@ -1162,8 +1162,13 @@ class WallpaperDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem?.button {
             button.image = nil
-            button.title = "🇰🇷"
-            button.font = NSFont.systemFont(ofSize: 14)
+            button.attributedTitle = NSAttributedString(
+                string: "🇰🇷",
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 14),
+                    .baselineOffset: -2.0
+                ]
+            )
             button.alignment = .center
             button.toolTip = "Gradient Wallpaper"
             button.setAccessibilityLabel("Gradient Wallpaper")
