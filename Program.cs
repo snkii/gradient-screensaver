@@ -75,7 +75,7 @@ class ScreenSaverForm : Form
         InitBlobs();
         RandomizeTargets();
 
-        _animTimer.Interval = 16;           // ~60 fps
+        _animTimer.Interval = 50;           // ~20 fps
         _animTimer.Tick    += OnTick;
         _animTimer.Start();
 
