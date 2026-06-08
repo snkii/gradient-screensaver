@@ -209,6 +209,9 @@ private func drawTiledFilmGrain(ctx: CGContext, image: CGImage, tileSize: CGFloa
 final class GradientWallpaperView: NSView {
     private let blobSizeFactor: CGFloat = 0.90
     private let blurFactor: CGFloat = 0.22
+    private let minimumBlobCenterDistance: CGFloat = 0.52
+    private let minimumColorDistance: CGFloat = 0.36
+    private let randomCandidateCount = 48
 
     private var blobs: [MeshBlob] = []
     private var mode: WallpaperMode = defaultWallpaperMode
@@ -241,12 +244,15 @@ final class GradientWallpaperView: NSView {
     }
 
     private func initBlobs() {
-        blobs = (0..<3).map { _ in
-            let color = randomColor()
+        let colors = distinctColors(count: 3)
+        let centers = separatedBlobCenters(count: 3)
+
+        blobs = (0..<3).map { index in
+            let color = colors[index]
             let velocity = randomVelocity()
             return MeshBlob(
-                x: randomBetween(-0.12, 1.12),
-                y: randomBetween(-0.10, 1.10),
+                x: centers[index].x,
+                y: centers[index].y,
                 vx: velocity.vx,
                 vy: velocity.vy,
                 vr: randomBetween(-0.8, 0.8),
@@ -260,6 +266,82 @@ final class GradientWallpaperView: NSView {
                 target: color
             )
         }
+    }
+
+    private func distinctColors(count: Int) -> [MeshRGB] {
+        guard count > 0 else { return [] }
+
+        var candidates = meshPalette.shuffled()
+        var selected: [MeshRGB] = []
+        if let first = candidates.popLast() {
+            selected.append(first)
+        }
+
+        while selected.count < count, !candidates.isEmpty {
+            let ranked = candidates.enumerated().map { index, color in
+                (index: index, color: color, distance: nearestColorDistance(color, to: selected))
+            }.sorted { $0.distance > $1.distance }
+
+            let preferred = ranked.filter { $0.distance >= minimumColorDistance }
+            let pool = preferred.isEmpty ? Array(ranked.prefix(min(4, ranked.count))) : Array(preferred.prefix(min(4, preferred.count)))
+            guard let pick = pool.randomElement() else { break }
+
+            selected.append(pick.color)
+            candidates.remove(at: pick.index)
+        }
+
+        while selected.count < count {
+            selected.append(randomColor())
+        }
+        return selected
+    }
+
+    private func separatedBlobCenters(count: Int) -> [(x: CGFloat, y: CGFloat)] {
+        guard count > 0 else { return [] }
+
+        var centers: [(x: CGFloat, y: CGFloat)] = []
+        while centers.count < count {
+            if centers.isEmpty {
+                centers.append(randomBlobCenter())
+                continue
+            }
+
+            let ranked = (0..<randomCandidateCount).map { _ -> (center: (x: CGFloat, y: CGFloat), distance: CGFloat) in
+                let center = randomBlobCenter()
+                return (center: center, distance: nearestCenterDistance(center, to: centers))
+            }.sorted { $0.distance > $1.distance }
+
+            let preferred = ranked.filter { $0.distance >= minimumBlobCenterDistance }
+            let pool = preferred.isEmpty ? Array(ranked.prefix(min(8, ranked.count))) : Array(preferred.prefix(min(8, preferred.count)))
+            centers.append((pool.randomElement() ?? ranked[0]).center)
+        }
+        return centers
+    }
+
+    private func randomBlobCenter() -> (x: CGFloat, y: CGFloat) {
+        (
+            x: randomBetween(-0.10, 1.10),
+            y: randomBetween(-0.08, 1.08)
+        )
+    }
+
+    private func nearestColorDistance(_ color: MeshRGB, to selected: [MeshRGB]) -> CGFloat {
+        guard !selected.isEmpty else { return .greatestFiniteMagnitude }
+        return selected.map { colorDistance(color, $0) }.min() ?? .greatestFiniteMagnitude
+    }
+
+    private func colorDistance(_ a: MeshRGB, _ b: MeshRGB) -> CGFloat {
+        let dr = a.r - b.r
+        let dg = a.g - b.g
+        let db = a.b - b.b
+        return sqrt(dr * dr + dg * dg + db * db)
+    }
+
+    private func nearestCenterDistance(_ center: (x: CGFloat, y: CGFloat), to centers: [(x: CGFloat, y: CGFloat)]) -> CGFloat {
+        guard !centers.isEmpty else { return .greatestFiniteMagnitude }
+        return centers.map { other in
+            hypot(center.x - other.x, center.y - other.y)
+        }.min() ?? .greatestFiniteMagnitude
     }
 
     private func randomColor() -> MeshRGB {
