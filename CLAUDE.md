@@ -1,4 +1,4 @@
-# Gradient Screensaver
+# Seonuk Gradient
 
 ## 프로젝트 목적
 
@@ -10,7 +10,7 @@ Gruvbox 팔레트 기반의 mesh gradient 애니메이션 화면보호기.
 ## 파일 구조
 
 ```
-gradient-screensaver/
+seonuk-gradient/
 ├── Program.cs                       # Windows (.scr) — C# / .NET 8 / WinForms
 ├── GradientScreenSaver.csproj
 ├── macos/

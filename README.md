@@ -1,6 +1,6 @@
-# Gradient Screensaver
+# Seonuk Gradient
 
-**[English](#gradient-screensaver) · [한국어](#한국어)**
+**[English](#seonuk-gradient) · [한국어](#한국어)**
 
 **Animated mesh gradient for your desktop — Windows screensaver, Windows wallpaper & macOS wallpaper.**
 
@@ -8,7 +8,7 @@ Soft organic color blobs drift across a dark background, slowly cycling through 
 
 ---
 
-![preview](https://raw.githubusercontent.com/snkii/gradient-screensaver/main/preview.gif)
+![preview](https://raw.githubusercontent.com/snkii/seonuk-gradient/main/preview.gif)
 
 ---
 
@@ -38,13 +38,13 @@ Soft organic color blobs drift across a dark background, slowly cycling through 
 
 ### 🪟 Windows — Screensaver
 
-**[⬇ Download GradientScreenSaver-Windows-x64.zip](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientScreenSaver-Windows-x64.zip)**
+**[⬇ Download GradientScreenSaver-Windows-x64.zip](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientScreenSaver-Windows-x64.zip)**
 
 > Requires [.NET 8 SDK](https://dotnet.microsoft.com/download)
 
 ```powershell
-git clone https://github.com/snkii/gradient-screensaver
-cd gradient-screensaver
+git clone https://github.com/snkii/seonuk-gradient
+cd seonuk-gradient
 dotnet publish -c Release
 ```
 
@@ -57,11 +57,11 @@ dotnet publish -c Release
 
 ### 🪟 Windows — Live Wallpaper
 
-**[⬇ Download GradientWallpaper-Windows-x64.zip](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientWallpaper-Windows-x64.zip)**
+**[⬇ Download GradientWallpaper-Windows-x64.zip](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientWallpaper-Windows-x64.zip)**
 
 ```powershell
-git clone https://github.com/snkii/gradient-screensaver
-cd gradient-screensaver\wallpaper-win
+git clone https://github.com/snkii/seonuk-gradient
+cd seonuk-gradient\wallpaper-win
 dotnet publish -c Release
 ```
 
@@ -71,11 +71,11 @@ Run `bin\Release\net8.0-windows\win-x64\publish\GradientWallpaper.exe`. A tray i
 
 ### 🍎 macOS — Screensaver
 
-**[⬇ Download GradientScreenSaver-macOS.zip](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientScreenSaver-macOS.zip)**
+**[⬇ Download GradientScreenSaver-macOS.zip](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientScreenSaver-macOS.zip)**
 
 ```bash
-git clone https://github.com/snkii/gradient-screensaver
-cd gradient-screensaver/macos
+git clone https://github.com/snkii/seonuk-gradient
+cd seonuk-gradient/macos
 make install
 ```
 
@@ -85,7 +85,7 @@ Open **System Settings → Screen Saver** and select **GradientScreenSaver**.
 
 ### 🍎 macOS — Live Wallpaper
 
-**[⬇ Download GradientWallpaper-macOS.zip](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientWallpaper-macOS.zip)**
+**[⬇ Download GradientWallpaper-macOS.zip](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientWallpaper-macOS.zip)**
 
 1. Unzip and open `GradientWallpaper.app`
 2. A ✦ icon appears in the menu bar
@@ -97,8 +97,8 @@ To auto-start at login: **System Settings → General → Login Items → + → 
 <summary>Build from source</summary>
 
 ```bash
-git clone https://github.com/snkii/gradient-screensaver
-cd gradient-screensaver/wallpaper
+git clone https://github.com/snkii/seonuk-gradient
+cd seonuk-gradient/wallpaper
 make install        # install to /Applications
 make install-login  # also auto-start at login
 ```
@@ -144,7 +144,7 @@ MIT
 
 # 한국어
 
-**[English](#gradient-screensaver) · [한국어](#한국어)**
+**[English](#seonuk-gradient) · [한국어](#한국어)**
 
 **데스크탑을 위한 움직이는 메시 그래디언트 — Windows 화면보호기, Windows 배경화면 & macOS 배경화면.**
 
@@ -178,13 +178,13 @@ MIT
 
 ### 🪟 Windows — 화면보호기
 
-**[⬇ GradientScreenSaver-Windows-x64.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientScreenSaver-Windows-x64.zip)**
+**[⬇ GradientScreenSaver-Windows-x64.zip 다운로드](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientScreenSaver-Windows-x64.zip)**
 
 > [.NET 8 SDK](https://dotnet.microsoft.com/download) 필요
 
 ```powershell
-git clone https://github.com/snkii/gradient-screensaver
-cd gradient-screensaver
+git clone https://github.com/snkii/seonuk-gradient
+cd seonuk-gradient
 dotnet publish -c Release
 ```
 
@@ -197,11 +197,11 @@ dotnet publish -c Release
 
 ### 🪟 Windows — 라이브 배경화면
 
-**[⬇ GradientWallpaper-Windows-x64.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientWallpaper-Windows-x64.zip)**
+**[⬇ GradientWallpaper-Windows-x64.zip 다운로드](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientWallpaper-Windows-x64.zip)**
 
 ```powershell
-git clone https://github.com/snkii/gradient-screensaver
-cd gradient-screensaver\wallpaper-win
+git clone https://github.com/snkii/seonuk-gradient
+cd seonuk-gradient\wallpaper-win
 dotnet publish -c Release
 ```
 
@@ -211,11 +211,11 @@ dotnet publish -c Release
 
 ### 🍎 macOS — 화면보호기
 
-**[⬇ GradientScreenSaver-macOS.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientScreenSaver-macOS.zip)**
+**[⬇ GradientScreenSaver-macOS.zip 다운로드](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientScreenSaver-macOS.zip)**
 
 ```bash
-git clone https://github.com/snkii/gradient-screensaver
-cd gradient-screensaver/macos
+git clone https://github.com/snkii/seonuk-gradient
+cd seonuk-gradient/macos
 make install
 ```
 
@@ -225,7 +225,7 @@ make install
 
 ### 🍎 macOS — 라이브 배경화면
 
-**[⬇ GradientWallpaper-macOS.zip 다운로드](https://github.com/snkii/gradient-screensaver/releases/latest/download/GradientWallpaper-macOS.zip)**
+**[⬇ GradientWallpaper-macOS.zip 다운로드](https://github.com/snkii/seonuk-gradient/releases/latest/download/GradientWallpaper-macOS.zip)**
 
 1. 압축 해제 후 `GradientWallpaper.app` 실행
 2. 메뉴바에 ✦ 아이콘이 나타남
@@ -237,8 +237,8 @@ make install
 <summary>소스에서 빌드</summary>
 
 ```bash
-git clone https://github.com/snkii/gradient-screensaver
-cd gradient-screensaver/wallpaper
+git clone https://github.com/snkii/seonuk-gradient
+cd seonuk-gradient/wallpaper
 make install        # /Applications 에 설치
 make install-login  # 로그인 항목에도 자동 등록
 ```
