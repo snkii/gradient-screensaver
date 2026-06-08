@@ -7,7 +7,7 @@ TARGET  = $(ARCH)-apple-macosx12.0
 .PHONY: build run stop install install-login clean
 
 build:
-	mkdir -p $(APP)/Contents/MacOS
+	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	swiftc \
 		-target $(TARGET) \
 		-sdk "$(SDK)" \
@@ -17,6 +17,7 @@ build:
 		-o $(BINARY) \
 		GradientWallpaper.swift
 	cp Info.plist $(APP)/Contents/Info.plist
+	cp AppIcon.icns $(APP)/Contents/Resources/AppIcon.icns
 	codesign --force --deep --sign - $(APP)
 	@echo "✓ Build complete"
 
